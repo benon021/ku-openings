@@ -2,8 +2,9 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>KU OPEN TOURNAMENT</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>KU Open Tournament 2026 - Control Edition</title>
+    <link rel="icon" type="image/png" href="assets/logo.png">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -50,64 +51,90 @@
         /* --- Top Navigation --- */
         .top-nav {
             position: sticky;
-            top: 0;
+            top: 1rem;
+            margin: 0 auto;
+            width: 95%;
+            max-width: 1200px;
             z-index: 50;
-            background-color: hsl(var(--background) / 0.95);
-            backdrop-filter: blur(8px);
-            border-bottom: 1px solid hsl(var(--border));
+            background: rgba(20, 20, 24, 0.65); /* Translucent Crystal */
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 20px; /* macOS semi-round */
+            padding: 0.5rem 1rem;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5), 0 4px 12px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+        }
+        .nav-content {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 0.75rem 2rem;
         }
-
-        .nav-logo {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-family: 'Outfit', sans-serif;
-            font-weight: 700;
-            font-size: 1.25rem;
-            color: hsl(var(--foreground));
+        .desktop-links {
+            display: none;
         }
-
-        .nav-logo svg {
-            color: hsl(var(--primary));
-            width: 24px;
-            height: 24px;
+        @media (min-width: 768px) {
+            .desktop-links {
+                display: flex;
+                background: rgba(0, 0, 0, 0.4);
+                border: 1px solid rgba(255, 255, 255, 0.05); /* inner border */
+                border-radius: 14px; /* macOS style inner element */
+                padding: 4px;
+                gap: 4px;
+                align-items: center;
+            }
         }
-
-        .nav-links {
-            display: flex;
-            gap: 1.5rem;
-            align-items: center;
-        }
-
-        .nav-link {
+        .nav-item {
+            text-decoration: none;
+            color: hsl(var(--muted-foreground));
+            padding: 8px 16px;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            font-weight: 500;
             display: flex;
             align-items: center;
             gap: 6px;
+            transition: all 0.2s ease;
+        }
+        .nav-item:hover {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.08); /* Hover glass */
+        }
+        .nav-item.active {
+            color: hsl(var(--primary));
+            background: hsl(var(--primary) / 0.15); /* Orange active glow */
+        }
+        .app-content {
+            padding: 1rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* Mobile Nav Link Styles (Sync with desktop aesthetic) */
+        .nav-link {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 44px;
+            height: 44px;
             color: hsl(var(--muted-foreground));
-            text-decoration: none;
-            font-size: 0.875rem;
-            font-weight: 500;
-            padding: 0.5rem 1rem;
-            border-radius: var(--radius);
-            transition: all 0.2s;
+            border-radius: 9999px;
+            transition: all 0.2s ease;
         }
 
         .nav-link svg {
-            width: 16px;
-            height: 16px;
+            width: 20px;
+            height: 20px;
         }
         
         .nav-link:hover {
-            color: hsl(var(--foreground));
+            color: #fff;
+            background: rgba(255, 255, 255, 0.08); /* Hover glass */
         }
 
         .nav-link.active {
-            color: hsl(var(--primary-foreground));
-            background-color: hsl(var(--primary));
+            color: hsl(var(--primary));
+            background: hsl(var(--primary) / 0.15); /* Orange active glow */
         }
 
         .login-btn {
@@ -257,14 +284,20 @@
         .mobile-bottom-nav {
             display: none;
             position: fixed;
-            bottom: 0; left: 0; right: 0;
-            background-color: hsl(var(--background) / 0.95);
-            backdrop-filter: blur(8px);
-            border-top: 1px solid hsl(var(--border));
-            padding: 0.5rem;
+            bottom: 1.5rem;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 92%;
+            border-radius: 9999px;
+            background: rgba(20, 20, 24, 0.85); /* Slightly darker glass */
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 0.5rem 1rem;
             justify-content: space-around;
             align-items: center;
             z-index: 50;
+            box-shadow: 0 10px 32px rgba(0,0,0,0.6);
         }
     </style>
 </head>
@@ -272,57 +305,67 @@
 
     <!-- Top Navigation (Desktop) -->
     <nav class="top-nav">
-        <a href="#/" class="nav-logo">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
-            KU OPEN
-        </a>
-        <div class="nav-links" id="desktop-links">
-            <a href="#/" class="nav-link active" id="nav-item-hub">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-                Home
+        <div class="nav-content">
+            <!-- Brand -->
+            <a href="#/" style="text-decoration:none; display:flex; align-items:center; gap:12px; margin-left: 8px;">
+                <div style="background:hsl(var(--primary)); width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; box-shadow: 0 0 12px hsl(var(--primary)/0.5);">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#fff" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 8v8"/><path d="M8 12h8"/></svg>
+                </div>
+                <span class="text-gradient" style="font-family:'Outfit',sans-serif; font-weight:800; font-size:1.4rem; letter-spacing:-0.5px;">KU Open</span>
             </a>
-            <a href="#/matches" class="nav-link" id="nav-item-matches">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                Fixtures
-            </a>
-            <a href="#/standings" class="nav-link" id="nav-item-standings">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>
-                Standings
-            </a>
-            <a href="#/knockouts" class="nav-link" id="nav-item-knockouts">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 17.5L3 6V3h3l11.5 11.5"></path><path d="M13 19l6-6"></path><path d="M16 16l4 4"></path><path d="M19 21l2-2"></path></svg>
-                Knockout
-            </a>
-            <a href="#/stats" class="nav-link" id="nav-item-stats">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>
-                Top Scorers
-            </a>
-            <a href="#/control" class="nav-link hidden" id="nav-item-control">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
-                Control
-            </a>
-        </div>
-        <div style="display:flex; align-items:center; gap: 12px;">
-            <div id="auth-status">
-                <button onclick="router.openLogin()" class="login-btn">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
-                    Login
+
+            <!-- Desktop Nav -->
+            <div class="desktop-links">
+                <a href="#/" id="nav-item-hub" class="nav-item active">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+                    Hub
+                </a>
+                <a href="#/matches" id="nav-item-matches" class="nav-item">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                    Fixtures
+                </a>
+                <a href="#/standings" id="nav-item-standings" class="nav-item">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>
+                    Standings
+                </a>
+                <a href="#/stats" id="nav-item-stats" class="nav-item">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>
+                    Top Scorers
+                </a>
+                <a href="#/control" id="nav-item-control" class="nav-item hidden">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 9.36l-7.1 7.1a1 1 0 0 1-1.42 0l-1.42-1.42a1 1 0 0 1 0-1.42l7.1-7.1a6 6 0 0 1 9.36-7.94l-3.77 3.77a1 1 0 0 0 0 1.42z"/></svg>
+                    Control
+                </a>
+            </div>
+
+            <!-- Profile/Command -->
+            <div style="display:flex; align-items:center; gap:8px;">
+                <button onclick="router.openLogin()" class="pill-badge" style="background:hsl(var(--primary)); color:#fff; border:none; padding:8px 16px; border-radius:10px; font-weight:600; font-size:0.85rem; display:flex; align-items:center; gap:6px; box-shadow: 0 4px 12px hsl(var(--primary)/0.3);">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                    Staff
                 </button>
             </div>
         </div>
     </nav>
 
-    <!-- App Root for Views -->
-    <main id="app-root"></main>
+    <!-- App Content Injection -->
+    <main id="app-root" class="app-content"></main>
+
+    <!-- Global Tech Support Footer -->
+    <footer style="margin-top: 3rem; padding: 2rem 2rem 6rem 2rem; border-top: 1px solid hsl(var(--border) / 0.5); text-align: center; color: hsl(var(--muted-foreground)); font-size: 0.85rem; display:flex; flex-direction:column; gap:8px;">
+        <span style="font-family:'Outfit',sans-serif; font-weight:600; color:hsl(var(--foreground)); font-size:1rem;">&copy; 2026 papsiitech&trade;</span>
+        <span style="font-size: 0.95rem; color:hsl(var(--foreground));">Want a custom management platform like this for your event?</span>
+        <span>Reach out for professional systems development at: <a href="mailto:papsiitech@gmail.com" style="color:hsl(var(--primary)); text-decoration:none; font-weight:600;">papsiitech@gmail.com</a></span>
+    </footer>
 
     <!-- Mobile Nav (Visible only on small screens) -->
     <nav class="mobile-bottom-nav" id="mobile-links">
-        <a href="#/" class="nav-link active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></a>
-        <a href="#/matches" class="nav-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></a>
-        <a href="#/standings" class="nav-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg></a>
-        <a href="#/knockouts" class="nav-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 17.5L3 6V3h3l11.5 11.5"></path><path d="M13 19l6-6"></path><path d="M16 16l4 4"></path><path d="M19 21l2-2"></path></svg></a>
-        <a href="#/stats" class="nav-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg></a>
-        <a href="#/control" class="nav-link hidden" id="mobile-nav-item-control"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg></a>
+        <a href="#/" id="mobile-nav-item-hub" class="nav-link active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></a>
+        <a href="#/matches" id="mobile-nav-item-matches" class="nav-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></a>
+        <a href="#/standings" id="mobile-nav-item-standings" class="nav-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg></a>
+        <a href="#/knockouts" id="mobile-nav-item-knockouts" class="nav-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 17.5L3 6V3h3l11.5 11.5"></path><path d="M13 19l6-6"></path><path d="M16 16l4 4"></path><path d="M19 21l2-2"></path></svg></a>
+        <a href="#/stats" id="mobile-nav-item-stats" class="nav-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg></a>
+        <a href="#/control" id="mobile-nav-item-control" class="nav-link hidden"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg></a>
     </nav>
 
     <!-- Modal Container -->

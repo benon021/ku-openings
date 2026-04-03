@@ -2,6 +2,7 @@
 
 const globalState = {
     currentCategoryId: 'all',
+    currentPitchId: 'all',
     categories: [],
 };
 
@@ -22,11 +23,88 @@ const app = {
         router.handleHashChange(); // Re-render the view with the new category
     },
 
+    setPitch: (id) => {
+        globalState.currentPitchId = id;
+        router.handleHashChange();
+    },
+
     // Maps
     openLocation: () => {
-        // Fallback or explicit routing logic
-        const query = encodeURIComponent("Kenyatta University, Thika Rd, Nairobi");
-        window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, '_blank');
+        // Route to maps with destination pre-filled, so user can input their starting location automatically!
+        const dest = encodeURIComponent("Kenyatta University, Thika Rd, Nairobi");
+        window.open(`https://www.google.com/maps/dir/?api=1&destination=${dest}`, '_blank');
+    },
+
+    // Dashboard Live Widget
+    initDashboardWidget: async () => {
+        // 1. Setup Live Time & Date
+        const updateTime = () => {
+            const timeEl = document.getElementById('widget-time');
+            const dateEl = document.getElementById('widget-date');
+            const greetEl = document.getElementById('widget-greeting');
+            if (!timeEl) return; // View changed
+
+            const now = new Date();
+            let hours = now.getHours();
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            hours = hours % 12 || 12; // 12hr format
+            const mins = now.getMinutes().toString().padStart(2, '0');
+            
+            timeEl.innerHTML = `${hours.toString().padStart(2, '0')}:${mins} <span style="font-size:1.5rem; font-weight:600;">${ampm}</span>`;
+            
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            dateEl.textContent = now.toLocaleDateString('en-US', options);
+
+            const hr = now.getHours();
+            let greeting = 'Nice evening';
+            if (hr < 12) greeting = 'Nice morning';
+            else if (hr < 17) greeting = 'Nice afternoon';
+            
+            const userDisplay = auth.user ? auth.user.email.split('@')[0] : 'Demo';
+            if (greetEl) {
+                greetEl.innerHTML = `${greeting},<br><span style="text-transform:capitalize">${userDisplay}</span>`;
+            }
+        };
+        updateTime();
+        const timer = setInterval(() => {
+            if(!document.getElementById('widget-time')) clearInterval(timer);
+            else updateTime();
+        }, 10000);
+
+        // 2. Fetch Live Weather (Nairobi coords: roughly -1.29, 36.82)
+        const fetchWeather = async () => {
+            try {
+                const res = await fetch("https://api.open-meteo.com/v1/forecast?latitude=-1.2921&longitude=36.8219&current_weather=true");
+                const data = await res.json();
+                const w = data.current_weather;
+                if (w) {
+                    document.getElementById('widget-temp').textContent = `${Math.round(w.temperature)}°C`;
+                    
+                    // Decode WMO code roughly
+                    let condition = 'Clear sky';
+                    let icon = '☀️';
+                    if (w.weathercode >= 1 && w.weathercode <= 3) { condition = 'Partly cloudy'; icon = '⛅'; }
+                    else if (w.weathercode >= 45 && w.weathercode <= 48) { condition = 'Foggy'; icon = '🌫️'; }
+                    else if (w.weathercode >= 51 && w.weathercode <= 67) { condition = 'Rain'; icon = '🌧️'; }
+                    else if (w.weathercode >= 71 && w.weathercode <= 77) { condition = 'Snow'; icon = '❄️'; }
+                    else if (w.weathercode >= 80 && w.weathercode <= 82) { condition = 'Showers'; icon = '🌦️'; }
+                    else if (w.weathercode >= 95) { condition = 'Thunderstorm'; icon = '⛈️'; }
+                    
+                    document.getElementById('widget-condition').textContent = condition;
+                    document.getElementById('widget-w-icon').textContent = icon;
+                }
+            } catch(e) {
+                console.error("Weather fetch failed", e);
+                const cond = document.getElementById('widget-condition');
+                if (cond) cond.textContent = 'Weather unavailable';
+            }
+        };
+        fetchWeather();
+        // Setup 30 minute polling interval for actual live weather changes
+        const weatherTimer = setInterval(() => {
+            if(!document.getElementById('widget-temp')) clearInterval(weatherTimer);
+            else fetchWeather();
+        }, 1800000); 
     },
 
     // Auth
@@ -48,7 +126,9 @@ const app = {
         localStorage.setItem('KU_AUTH', JSON.stringify({ user: auth.user, role: auth.role }));
         auth.updateUI();
         router.closeModal();
+        alert('Authentication bypassed successfully. Logged in as Admin.');
         router.handleHashChange();
+        window.location.reload();
     },
 
     // Data submissions
@@ -87,11 +167,14 @@ const app = {
         const b = document.getElementById('m-team-b')?.value;
         const pitch = document.getElementById('m-pitch')?.value;
         const stage = document.getElementById('m-stage')?.value;
+        const timeInput = document.getElementById('m-time')?.value;
         if (a === b) return alert('Please select two different teams');
+        if (!timeInput) return alert('Please select a match time to prevent overlapping');
         const { data: teams } = await api.getTeams('all');
         const teamAObj = teams.find(t => t.id === a);
-        await api.scheduleMatch({ teamA_id: a, teamB_id: b, pitch: pitch || 'Pitch 1', category_id: teamAObj.category_id, stage, time: new Date().toISOString() });
-        alert('Match scheduled');
+        const res = await api.scheduleMatch({ teamA_id: a, teamB_id: b, pitch: pitch || 'Pitch 1', category_id: teamAObj.category_id, stage, time: new Date(timeInput).toISOString() });
+        if (res.error) return alert(res.error);
+        alert('Match scheduled successfully');
         router.handleHashChange();
     },
 
@@ -103,6 +186,34 @@ const app = {
         await api.finalizeMatch(id, a, b);
         alert('Result submitted');
         router.handleHashChange();
+    },
+
+    submitTeamStats: async () => {
+        const id = document.getElementById('s-team')?.value;
+        const stats = {
+            p: document.getElementById('s-p')?.value,
+            w: document.getElementById('s-w')?.value,
+            d: document.getElementById('s-d')?.value,
+            l: document.getElementById('s-l')?.value,
+            gf: document.getElementById('s-gf')?.value,
+            ga: document.getElementById('s-ga')?.value
+        };
+        const res = await api.updateTeamStats(id, stats);
+        if (res.error) return alert(res.error);
+        alert('Team stats offset updated successfully');
+        router.handleHashChange();
+    },
+
+    submitUser: async () => {
+        const email = document.getElementById('u-email')?.value;
+        const pass = document.getElementById('u-pass')?.value;
+        const role = document.getElementById('u-role')?.value;
+        if (!email || !pass) return alert('Please fill in both email and password');
+        await api.manageStaff(email, pass, role, 'create');
+        alert('User registered successfully');
+        document.getElementById('u-email').value = '';
+        document.getElementById('u-pass').value = '';
+        views.setTab(document.querySelector('.pill-badge.active'), 'users'); // refresh view
     }
 };
 

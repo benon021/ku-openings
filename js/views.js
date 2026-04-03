@@ -5,22 +5,91 @@ const views = {
     // ─── HUB (Home) ───
     dashboardHub: async () => {
         const catId = globalState.currentCategoryId;
-        const { data: matches } = await api.getMatches(catId);
+        const pitchId = globalState.currentPitchId;
+        const { data: matches } = await api.getMatches(catId, pitchId);
         const upcoming = matches.filter(m => m.status === 'upcoming').slice(0, 3);
         const finished = matches.filter(m => m.status === 'finished').slice(-3).reverse();
 
         return `
             <div class="view-enter animate-in fade-in zoom-in-95" style="animation-duration:0.3s">
-                <div class="card hero-gradient" style="margin-bottom: 1.5rem; padding: 2.5rem; border-color: hsl(var(--border)); text-align:center;">
-                    <h1 class="text-gradient" style="font-size:2.8rem; line-height:1.1; margin-bottom:1rem;">WELCOME TO KENYATTA UNIVERSITY OPEN TOURNAMENT 2026</h1>
-                    <div style="color:hsl(var(--muted-foreground)); font-size: 1.1rem; margin-bottom: 1.5rem;">Tournament Management Edition</div>
+                <style>
+                    .hero-layout-grid {
+                        display: grid;
+                        grid-template-columns: 1.2fr auto 1fr;
+                        gap: 1.5rem;
+                        align-items: stretch;
+                        text-align: left;
+                    }
+                    .hero-grid-title { justify-self: start; }
+                    .hero-grid-logo { justify-self: center; align-self: center; }
+                    .hero-grid-weather { justify-self: end; text-align: right; }
                     
-                    <button class="pill-badge" style="background:hsl(var(--card)); border-color:hsl(var(--border));" onclick="app.openLocation()">
-                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" style="display:inline; margin-bottom:-3px; margin-right:4px;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
-                        Kenyatta University, Thika Rd, Nairobi (Live Location)
-                    </button>
+                    @media (max-width: 768px) {
+                        .hero-layout-grid {
+                            grid-template-columns: 1fr 1fr;
+                            grid-template-rows: auto auto;
+                            align-items: center;
+                        }
+                        .hero-grid-title {
+                            grid-column: 1 / span 2;
+                        }
+                        .hero-grid-logo {
+                            grid-column: 1;
+                            justify-self: start;
+                        }
+                        .hero-grid-weather {
+                            grid-column: 2;
+                            justify-self: end;
+                        }
+                    }
+                </style>
+                <div class="card hero-gradient" style="margin-bottom: 1.5rem; padding: clamp(1rem, 3vw, 2rem); border-color: hsl(var(--border));">
+                    <div class="hero-layout-grid">
+                        
+                        <!-- Left Layout: Radiant Title and Time -->
+                        <div class="hero-grid-title" style="display:flex; flex-direction:column; justify-content:space-between; height: 100%;">
+                            <div>
+                                <h1 class="text-gradient" style="font-size:clamp(1.5rem, 4vw, 2.2rem); line-height:1.15; margin-bottom:0.25rem; font-weight:800; font-family:'Outfit',sans-serif;">WELCOME TO KENYATTA UNIVERSITY OPEN TOURNAMENT 2026</h1>
+                                <div style="color:hsl(var(--muted-foreground)); font-size: clamp(0.75rem, 2vw, 0.9rem); margin-bottom: 1rem;">Tournament Management Edition</div>
+                            </div>
+                            
+                            <div style="margin-top:auto;">
+                                <div style="font-size:clamp(1.5rem, 5vw, 3rem); font-weight:800; font-family:'Outfit',sans-serif; line-height:1; display:flex; align-items:baseline; gap:4px;" id="widget-time">
+                                    --:-- <span style="font-size:clamp(0.8rem, 2vw, 1.2rem); font-weight:600;">--</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Center Layout: Round Logo -->
+                        <div class="hero-grid-logo">
+                            <img src="assets/logo.jpeg" alt="Vultures Team Logo" style="width:clamp(120px, 20vw, 220px); height:clamp(120px, 20vw, 220px); border-radius:50%; object-fit:cover; border:none; box-shadow:0 10px 40px rgba(0,0,0,0.6), 0 0 20px hsl(var(--primary)/0.2); background:#000;">
+                        </div>
+
+                        <!-- Right Layout: Weather and Maps -->
+                        <div class="hero-grid-weather" style="display:flex; flex-direction:column; justify-content:space-between; height:100%;">
+                            <div style="display:flex; align-items:center; gap:8px; justify-content:flex-end;">
+                                <div id="widget-w-icon" style="font-size:clamp(1.5rem, 4vw, 2.5rem);">⛅</div>
+                                <div style="font-size:clamp(1.5rem, 5vw, 3rem); font-weight:800; font-family:'Outfit',sans-serif;" id="widget-temp">--°C</div>
+                            </div>
+                            <div style="margin-top: 0.5rem;">
+                                <div style="font-size:clamp(0.8rem, 2vw, 1rem); margin-bottom:2px; color:hsl(var(--foreground))" id="widget-condition">Loading...</div>
+                                <div style="font-size:clamp(0.8rem, 2vw, 1rem); font-weight:600; margin-bottom:2px;">Nairobi</div>
+                                <div style="color:hsl(var(--muted-foreground)); font-size:clamp(0.65rem, 2vw, 0.8rem);" id="widget-date">Loading date...</div>
+                            </div>
+                            <div style="margin-top: 1rem;">
+                                 <button class="pill-badge" style="background:hsl(var(--primary)); color:#fff; border:none; padding: 6px 12px; font-size:0.75rem; box-shadow:0 0 10px hsl(var(--primary)/0.4); display:flex; align-items:center; gap:4px;" onclick="app.openLocation()">
+                                     <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                                     Directions
+                                 </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+                    <h3 style="font-size:1.1rem; font-family:'Outfit',sans-serif; margin:0;">Live Feed</h3>
+                    ${views.pitchDropdown()}
+                </div>
                 <div class="grid-cards">
                     <div class="card card-gradient">
                         <div class="section-title">
@@ -31,7 +100,7 @@ const views = {
                             <a href="#/match/${m.id}" style="display:block; padding: 12px 0; border-bottom: 1px solid hsl(var(--border));">
                                 <div style="display:flex; justify-content:space-between; margin-bottom: 4px; font-size:0.8rem; color:hsl(var(--muted-foreground))">
                                     <span>${m.pitch}</span>
-                                    <span>Upcoming${m.stage && m.stage !== 'pool' ? ' ('+m.stage.toUpperCase()+')':''}</span>
+                                    <span>Upcoming${m.stage && m.stage !== 'pool' ? ' (' + m.stage.toUpperCase() + ')' : ''}</span>
                                 </div>
                                 <div style="display:flex; justify-content:space-between; align-items:center; font-weight:600; font-size:0.9rem;">
                                     <span>${m.teamA?.name || 'TBA'}</span>
@@ -54,7 +123,7 @@ const views = {
                             <a href="#/match/${m.id}" style="display:block; padding: 12px 0; border-bottom: 1px solid hsl(var(--border));">
                                 <div style="display:flex; justify-content:space-between; margin-bottom: 4px; font-size:0.8rem; color:hsl(var(--muted-foreground))">
                                     <span>${m.pitch}</span>
-                                    <span style="color:hsl(var(--accent))">FT${m.stage && m.stage !== 'pool' ? ' ('+m.stage.toUpperCase()+')':''}</span>
+                                    <span style="color:hsl(var(--accent))">FT${m.stage && m.stage !== 'pool' ? ' (' + m.stage.toUpperCase() + ')' : ''}</span>
                                 </div>
                                 <div style="display:flex; justify-content:space-between; align-items:center; font-weight:600; font-size:0.9rem;">
                                     <span>${m.teamA?.name || 'TBA'}</span>
@@ -72,7 +141,7 @@ const views = {
     standings: async () => {
         const catId = globalState.currentCategoryId;
         const { data: pools } = await api.getPools(catId);
-        
+
         let html = `
             <div class="view-enter">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
@@ -115,7 +184,7 @@ const views = {
                         <tbody>
                             ${std.map((s, i) => `
                                 <tr style="border-bottom: 1px solid hsl(var(--border) / 0.5);">
-                                    <td style="padding:0.75rem 1rem;">${i + 1}</td>
+                                    <td style="padding:0.75rem 1rem;">${s.position}</td>
                                     <td style="padding:0.75rem 0.5rem; font-weight:600;">${s.name.toUpperCase()}</td>
                                     <td style="padding:0.75rem; text-align:center; color:hsl(var(--muted-foreground))">${s.p}</td>
                                     <td style="padding:0.75rem; text-align:center;">${s.w}</td>
@@ -137,8 +206,9 @@ const views = {
     // ─── KNOCKOUTS ───
     knockouts: async () => {
         const catId = globalState.currentCategoryId;
-        const { data: matches } = await api.getMatches(catId);
-        
+        const pitchId = globalState.currentPitchId;
+        const { data: matches } = await api.getMatches(catId, pitchId);
+
         const qf = matches.filter(m => m.stage === 'qf');
         const sf = matches.filter(m => m.stage === 'sf');
         const f = matches.filter(m => m.stage === 'f');
@@ -148,12 +218,12 @@ const views = {
             ${list.length ? `<div class="grid-cards">` + list.map(m => `
                 <a href="#/match/${m.id}" class="card card-gradient" style="display:block">
                     <div style="display:flex; justify-content:space-between; margin-bottom: 12px;">
-                        <span style="font-size:0.8rem; padding: 2px 8px; border-radius:12px; background: ${m.status==='finished'?'hsl(var(--accent)/0.2)':'hsl(var(--primary)/0.2)'}; color:${m.status==='finished'?'hsl(var(--accent))':'hsl(var(--primary))'}">${m.status.toUpperCase()}</span>
+                        <span style="font-size:0.8rem; padding: 2px 8px; border-radius:12px; background: ${m.status === 'finished' ? 'hsl(var(--accent)/0.2)' : 'hsl(var(--primary)/0.2)'}; color:${m.status === 'finished' ? 'hsl(var(--accent))' : 'hsl(var(--primary))'}">${m.status.toUpperCase()}</span>
                         <span style="font-size:0.8rem; color:hsl(var(--muted-foreground))">${m.pitch}</span>
                     </div>
                     <div style="display:flex; justify-content:space-between; align-items:center; font-weight:600;">
                         <span style="width:40%; text-align:left;">${m.teamA?.name || 'TBA'}</span>
-                        <span style="font-size:1.25rem; color:${m.status==='finished'?'hsl(var(--primary))':'hsl(var(--muted-foreground))'}">${m.status==='finished'? m.scoreA+' - '+m.scoreB : 'vs'}</span>
+                        <span style="font-size:1.25rem; color:${m.status === 'finished' ? 'hsl(var(--primary))' : 'hsl(var(--muted-foreground))'}">${m.status === 'finished' ? m.scoreA + ' - ' + m.scoreB : 'vs'}</span>
                         <span style="width:40%; text-align:right;">${m.teamB?.name || 'TBA'}</span>
                     </div>
                 </a>
@@ -164,7 +234,7 @@ const views = {
             <div class="view-enter">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
                     <div class="section-title" style="margin:0;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 17.5L3 6V3h3l11.5 11.5"></path><path d="M13 19l6-6"></path><path d="M16 16l4 4"></path><path d="M19 21l2-2"></path></svg> Knockout Bracket</div>
-                    ${views.categoryDropdown()}
+                    <div style="display:flex; gap:8px;">${views.pitchDropdown()} ${views.categoryDropdown()}</div>
                 </div>
                 ${renderStage('Quarter Finals', qf)}
                 ${renderStage('Semi Finals', sf)}
@@ -176,19 +246,20 @@ const views = {
     // ─── MATCHES (Fixtures) ───
     matches: async () => {
         const catId = globalState.currentCategoryId;
-        const { data: matches } = await api.getMatches(catId);
+        const pitchId = globalState.currentPitchId;
+        const { data: matches } = await api.getMatches(catId, pitchId);
         const upcoming = matches.filter(m => m.status === 'upcoming');
         const finished = matches.filter(m => m.status === 'finished');
 
         const renderList = (list) => list.length ? `<div class="grid-cards">` + list.map(m => `
             <a href="#/match/${m.id}" class="card card-gradient" style="display:block">
                 <div style="display:flex; justify-content:space-between; margin-bottom: 12px;">
-                    <span style="font-size:0.8rem; padding: 2px 8px; border-radius:12px; background: ${m.status==='finished'?'hsl(var(--accent)/0.2)':'hsl(var(--primary)/0.2)'}; color:${m.status==='finished'?'hsl(var(--accent))':'hsl(var(--primary))'}">${m.status.toUpperCase()}</span>
+                    <span style="font-size:0.8rem; padding: 2px 8px; border-radius:12px; background: ${m.status === 'finished' ? 'hsl(var(--accent)/0.2)' : 'hsl(var(--primary)/0.2)'}; color:${m.status === 'finished' ? 'hsl(var(--accent))' : 'hsl(var(--primary))'}">${m.status.toUpperCase()}</span>
                     <span style="font-size:0.8rem; color:hsl(var(--muted-foreground))">${m.pitch} ${m.stage && m.stage !== 'pool' ? ' • ' + m.stage.toUpperCase() : ''}</span>
                 </div>
                 <div style="display:flex; justify-content:space-between; align-items:center; font-weight:600;">
                     <span style="width:40%; text-align:left;">${m.teamA?.name || 'TBA'}</span>
-                    <span style="font-size:1.25rem; color:${m.status==='finished'?'hsl(var(--primary))':'hsl(var(--muted-foreground))'}">${m.status==='finished'? m.scoreA+' - '+m.scoreB : 'vs'}</span>
+                    <span style="font-size:1.25rem; color:${m.status === 'finished' ? 'hsl(var(--primary))' : 'hsl(var(--muted-foreground))'}">${m.status === 'finished' ? m.scoreA + ' - ' + m.scoreB : 'vs'}</span>
                     <span style="width:40%; text-align:right;">${m.teamB?.name || 'TBA'}</span>
                 </div>
             </a>
@@ -198,7 +269,7 @@ const views = {
             <div class="view-enter">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
                     <div class="section-title" style="margin:0;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> All Fixtures</div>
-                    ${views.categoryDropdown()}
+                    <div style="display:flex; gap:8px;">${views.pitchDropdown()} ${views.categoryDropdown()}</div>
                 </div>
                 <h3 style="font-size: 1rem; color: hsl(var(--muted-foreground)); margin-bottom: 1rem; margin-top:2rem;">Upcoming</h3>
                 ${renderList(upcoming)}
@@ -212,7 +283,7 @@ const views = {
         const catId = globalState.currentCategoryId;
         const { data: teams } = await api.getTeams(catId);
         const { data: pools } = await api.getPools('all');
-        
+
         return `
             <div class="view-enter">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
@@ -224,8 +295,8 @@ const views = {
                 </div>
                 <div class="grid-cards">
                     ${teams.length ? teams.map(t => {
-                        const tPool = pools.find(p=>p.id === t.pool_id);
-                        return `
+            const tPool = pools.find(p => p.id === t.pool_id);
+            return `
                         <a href="#/team/${t.id}" class="card card-gradient" style="display:block; text-decoration:none;">
                             <h3 style="font-weight:700; font-size:1.1rem; color:hsl(var(--foreground)); margin-bottom:4px;">${t.name.toUpperCase()}</h3>
                             <div style="color:hsl(var(--muted-foreground)); font-size:0.85rem;">
@@ -264,6 +335,8 @@ const views = {
                             <button class="pill-badge" onclick="views.setTab(this,'players')">Player</button>
                             <button class="pill-badge" onclick="views.setTab(this,'schedule')">Schedule</button>
                             <button class="pill-badge" onclick="views.setTab(this,'finalize')">Scores</button>
+                            ${auth.role === 'admin' ? `<button class="pill-badge" onclick="views.setTab(this,'stats')">Stats</button>` : ''}
+                            ${auth.role === 'admin' ? `<button class="pill-badge" onclick="views.setTab(this,'users')">Users</button>` : ''}
                         </div>
 
                         <div id="control-port">
@@ -274,7 +347,7 @@ const views = {
             </div>`;
     },
 
-    setTab: async function(btn, tab) {
+    setTab: async function (btn, tab) {
         document.querySelectorAll('#control-port').forEach(() => {
             const container = btn.parentElement;
             container.querySelectorAll('.pill-badge').forEach(b => b.classList.remove('active'));
@@ -286,12 +359,15 @@ const views = {
         const { data: pools } = await api.getPools(catId);
         const { data: cats } = await api.getCategories();
         const { data: matches } = await api.getMatches(catId);
+        const { data: users } = await api.getUsers();
 
         if (tab === 'teams') port.innerHTML = views.controlTeamForm(pools);
         else if (tab === 'pools') port.innerHTML = views.controlPoolForm(cats);
         else if (tab === 'players') port.innerHTML = views.controlPlayerForm(teams);
         else if (tab === 'schedule') port.innerHTML = views.controlScheduleForm(teams);
         else if (tab === 'finalize') port.innerHTML = views.controlFinalizeForm(matches.filter(m => m.status === 'upcoming'));
+        else if (tab === 'stats' && auth.role === 'admin') port.innerHTML = views.controlStatsForm(teams);
+        else if (tab === 'users' && auth.role === 'admin') port.innerHTML = views.controlUsersForm(users);
     },
 
     controlPoolForm: (cats) => `
@@ -316,7 +392,7 @@ const views = {
             </select>
             <label style="display:block; font-size:0.8rem; color:hsl(var(--muted-foreground)); margin-bottom:4px">Assign to Pool</label>
             <select class="form-input" id="new-team-pool">
-                ${pools.map(p => `<option value="${p.id}" class="opt-${p.category_id}">${p.name} (${p.category_id === 'cat-m'?'Men':'Women'})</option>`).join('')}
+                ${pools.map(p => `<option value="${p.id}" class="opt-${p.category_id}">${p.name} (${p.category_id === 'cat-m' ? 'Men' : 'Women'})</option>`).join('')}
             </select>
             <button class="btn-full" onclick="app.submitTeam()">Register Team</button>
         </div>
@@ -357,15 +433,59 @@ const views = {
             <select class="form-input" id="m-team-b">
                 ${teams.map(t => `<option value="${t.id}">${t.name} (Away)</option>`).join('')}
             </select>
-            <input class="form-input" type="text" id="m-pitch" placeholder="Pitch / Venue (e.g. Pitch 1)">
+            <select class="form-input" id="m-pitch">
+                <option value="Pitch A">Pitch A</option>
+                <option value="Pitch B">Pitch B</option>
+            </select>
+            <input class="form-input" type="datetime-local" id="m-time" required>
             <button class="btn-full" onclick="app.submitMatch()">Schedule Fixture</button>
+        </div>`,
+
+    controlStatsForm: (teams) => `
+        <div>
+            <select class="form-input" id="s-team">
+                ${teams.map(t => `<option value="${t.id}">${t.name}</option>`).join('')}
+            </select>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                <input class="form-input" type="number" id="s-p" placeholder="Matches (P)">
+                <input class="form-input" type="number" id="s-w" placeholder="Wins (W)">
+                <input class="form-input" type="number" id="s-d" placeholder="Draws (D)">
+                <input class="form-input" type="number" id="s-l" placeholder="Losses (L)">
+                <input class="form-input" type="number" id="s-gf" placeholder="Goals For (GF)">
+                <input class="form-input" type="number" id="s-ga" placeholder="Goals Ag (GA)">
+            </div>
+            <p style="font-size:0.8rem; color:hsl(var(--muted-foreground)); margin-bottom:8px;">These stats offset the dynamic tally.</p>
+            <button class="btn-full" style="background:hsl(var(--primary)); color:#000" onclick="app.submitTeamStats()">Update Team Stats Override</button>
+        </div>`,
+
+    controlUsersForm: (users) => `
+        <div>
+            <div style="margin-bottom:1rem; border-bottom:1px solid hsl(var(--border)); padding-bottom:8px;">
+                <h4 style="font-size:0.9rem; margin-bottom:8px">Existing Users</h4>
+                <div style="max-height:100px; overflow-y:auto; font-size:0.8rem;">
+                    ${users.map(u => `
+                        <div style="display:flex; justify-content:space-between; padding:4px 0;">
+                            <span>${u.email}</span>
+                            <span style="color:hsl(var(--primary))">${u.role}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+            <h4 style="font-size:0.9rem; margin-bottom:8px">Register New Profile</h4>
+            <input class="form-input" type="text" id="u-email" placeholder="Email / Username (e.g. jdoe@ku.knt)">
+            <input class="form-input" type="password" id="u-pass" placeholder="Password">
+            <select class="form-input" id="u-role">
+                <option value="staff">Staff (Limited Management)</option>
+                <option value="admin">Admin (Full Control)</option>
+            </select>
+            <button class="btn-full" style="background:hsl(var(--accent)); color:#fff" onclick="app.submitUser()">Register User</button>
         </div>`,
 
     controlFinalizeForm: (upcomingMatches) => `
         <div>
             ${upcomingMatches.length ? `
                 <select class="form-input" id="m-fin-idx">
-                    ${upcomingMatches.map(m => `<option value="${m.id}">${m.teamA?.name || 'A'} vs ${m.teamB?.name || 'B'} (${(m.stage||'pool').toUpperCase()})</option>`).join('')}
+                    ${upcomingMatches.map(m => `<option value="${m.id}">${m.teamA?.name || 'A'} vs ${m.teamB?.name || 'B'} (${(m.stage || 'pool').toUpperCase()})</option>`).join('')}
                 </select>
                 <div style="display:flex;gap:12px">
                     <input class="form-input" type="number" id="m-fin-a" placeholder="Home score">
@@ -411,14 +531,14 @@ const views = {
                 <a href="javascript:history.back()" style="display:inline-block; margin-bottom:1rem; color:hsl(var(--muted-foreground)); font-size:0.9rem">&larr; Back to Fixtures</a>
                 <div class="card card-gradient">
                     <div style="text-align:center; margin-bottom:16px;">
-                        <span style="display:inline-block; padding: 4px 12px; border-radius:16px; background:${m.status==='finished'?'hsl(var(--accent)/0.2)':'hsl(var(--primary)/0.2)'}; color:${m.status==='finished'?'hsl(var(--accent))':'hsl(var(--primary))'}; font-size:0.85rem; font-weight:600;">${m.status.toUpperCase()}</span>
+                        <span style="display:inline-block; padding: 4px 12px; border-radius:16px; background:${m.status === 'finished' ? 'hsl(var(--accent)/0.2)' : 'hsl(var(--primary)/0.2)'}; color:${m.status === 'finished' ? 'hsl(var(--accent))' : 'hsl(var(--primary))'}; font-size:0.85rem; font-weight:600;">${m.status.toUpperCase()}</span>
                     </div>
                     <div style="display:flex; justify-content:space-between; align-items:center; font-size:1.5rem; font-family:'Outfit', sans-serif; font-weight:700;">
                         <div style="flex:1; text-align:right;">${m.teamA?.name}</div>
-                        <div style="padding: 0 1.5rem; color:${m.status==='finished'?'hsl(var(--primary))':'hsl(var(--muted-foreground))'}">${m.status==='finished'?m.scoreA+' - '+m.scoreB:'VS'}</div>
+                        <div style="padding: 0 1.5rem; color:${m.status === 'finished' ? 'hsl(var(--primary))' : 'hsl(var(--muted-foreground))'}">${m.status === 'finished' ? m.scoreA + ' - ' + m.scoreB : 'VS'}</div>
                         <div style="flex:1; text-align:left;">${m.teamB?.name}</div>
                     </div>
-                    <div style="text-align:center; color:hsl(var(--muted-foreground)); margin-top:16px; font-size:0.9rem">${m.pitch} ${m.stage && m.stage !== 'pool' ? ' • '+m.stage.toUpperCase():''}</div>
+                    <div style="text-align:center; color:hsl(var(--muted-foreground)); margin-top:16px; font-size:0.9rem">${m.pitch} ${m.stage && m.stage !== 'pool' ? ' • ' + m.stage.toUpperCase() : ''}</div>
                 </div>
             </div>`;
     },
@@ -431,10 +551,18 @@ const views = {
         </div>`,
 
     categoryDropdown: () => `
-        <select class="form-input" style="width:auto; margin:0; padding:4px 8px; border-radius:8px; font-size:0.85rem;" onchange="app.setCategory(this.value)">
-            <option value="all" ${globalState.currentCategoryId==='all'?'selected':''}>All Categories</option>
-            <option value="cat-m" ${globalState.currentCategoryId==='cat-m'?'selected':''}>Mens</option>
-            <option value="cat-w" ${globalState.currentCategoryId==='cat-w'?'selected':''}>Ladies</option>
+        <select class="modern-select" onchange="app.setCategory(this.value)">
+            <option value="all" ${globalState.currentCategoryId === 'all' ? 'selected' : ''}>All Categories</option>
+            <option value="cat-m" ${globalState.currentCategoryId === 'cat-m' ? 'selected' : ''}>Mens</option>
+            <option value="cat-w" ${globalState.currentCategoryId === 'cat-w' ? 'selected' : ''}>Ladies</option>
+        </select>
+    `,
+
+    pitchDropdown: () => `
+        <select class="modern-select" onchange="app.setPitch(this.value)">
+            <option value="all" ${globalState.currentPitchId === 'all' ? 'selected' : ''}>All Fields</option>
+            <option value="Pitch A" ${globalState.currentPitchId === 'Pitch A' ? 'selected' : ''}>Pitch A</option>
+            <option value="Pitch B" ${globalState.currentPitchId === 'Pitch B' ? 'selected' : ''}>Pitch B</option>
         </select>
     `,
 
@@ -490,6 +618,45 @@ style.textContent = `
     .pill-badge:hover:not(.active) {
         background: hsl(var(--border));
         color: hsl(var(--foreground));
+    }
+    .modern-select {
+        appearance: none;
+        -webkit-appearance: none;
+        background-color: rgba(255, 255, 255, 0.05); /* Premium glass background */
+        backdrop-filter: blur(8px);
+        border: 1px solid rgba(255, 255, 255, 0.1); /* Subtle outline */
+        color: hsl(var(--foreground));
+        padding: 8px 16px;
+        padding-right: 40px;
+        border-radius: 10px; /* Mac style radius */
+        font-size: 0.9rem;
+        font-family: inherit;
+        font-weight: 500;
+        margin: 0;
+        width: auto;
+        cursor: pointer;
+        background-image: url('data:image/svg+xml;utf8,<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="2" xmlns="http://www.w3.org/2000/svg"><polyline points="6 9 12 15 18 9"/></svg>');
+        background-repeat: no-repeat;
+        background-position: right 10px center;
+        background-size: 18px;
+        transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255,255,255,0.1);
+    }
+    .modern-select:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+        border-color: rgba(255, 255, 255, 0.2);
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255,255,255,0.15);
+    }
+    .modern-select:focus {
+        outline: none;
+        border-color: hsl(var(--primary));
+        box-shadow: 0 0 0 3px hsl(var(--primary) / 0.3), inset 0 1px 0 rgba(255,255,255,0.1);
+        background-color: rgba(0, 0, 0, 0.8);
+    }
+    .modern-select option {
+        background-color: hsl(var(--card));
+        color: hsl(var(--card-foreground));
+        padding: 8px;
     }
 `;
 document.head.appendChild(style);

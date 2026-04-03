@@ -31,8 +31,8 @@ const MOCK_DATA = {
         { id: 'pl3', name: 'Serena Williams', jersey: 1, team_id: 't6' }
     ],
     matches: JSON.parse(localStorage.getItem('KU_MATCHES')) || [
-        { id: 'm1', teamA_id: 't1', teamB_id: 't2', scoreA: 4, scoreB: 2, status: 'finished', pitch: 'Arena 1', time: new Date().toISOString(), category_id: 'cat-m', stage: 'pool' },
-        { id: 'm2', teamA_id: 't3', teamB_id: 't1', scoreA: 0, scoreB: 0, status: 'upcoming', pitch: 'Arena 2', time: new Date(Date.now() + 86400000).toISOString(), category_id: 'cat-m', stage: 'pool' }
+        { id: 'm1', teamA_id: 't1', teamB_id: 't2', scoreA: 4, scoreB: 2, status: 'finished', pitch: 'Pitch A', time: new Date().toISOString(), category_id: 'cat-m', stage: 'pool' },
+        { id: 'm2', teamA_id: 't3', teamB_id: 't1', scoreA: 0, scoreB: 0, status: 'upcoming', pitch: 'Pitch B', time: new Date(Date.now() + 86400000).toISOString(), category_id: 'cat-m', stage: 'pool' }
     ],
     events: JSON.parse(localStorage.getItem('KU_EVENTS')) || [
         { match_id: 'm1', type: 'goal', player_name: 'Michael Jordan', team_id: 't1', minute: 15 }
@@ -61,8 +61,11 @@ const api = {
     getPools: async (catId) => ({ data: (catId && catId !== 'all') ? MOCK_DATA.pools.filter(p => p.category_id === catId) : MOCK_DATA.pools }),
     getTeams: async (catId) => ({ data: (catId && catId !== 'all') ? MOCK_DATA.teams.filter(t => t.category_id === catId) : MOCK_DATA.teams }),
     getPlayers: async (teamId) => ({ data: teamId ? MOCK_DATA.players.filter(p => p.team_id === teamId) : MOCK_DATA.players }),
-    getMatches: async (catId) => {
-        const matches = (catId && catId !== 'all') ? MOCK_DATA.matches.filter(m => m.category_id === catId) : MOCK_DATA.matches;
+    getMatches: async (catId, pitchId = 'all') => {
+        let matches = (catId && catId !== 'all') ? MOCK_DATA.matches.filter(m => m.category_id === catId) : MOCK_DATA.matches;
+        if (pitchId && pitchId !== 'all') {
+            matches = matches.filter(m => m.pitch === pitchId);
+        }
         return { data: matches.map(m => ({
             ...m,
             teamA: MOCK_DATA.teams.find(t => t.id === m.teamA_id),
@@ -75,7 +78,7 @@ const api = {
     getStandings: async (poolId) => {
         // Real-time Standing Calculation Logic
         const teams = MOCK_DATA.teams.filter(t => t.pool_id === poolId);
-        const standings = teams.map(t => {
+        let standings = teams.map(t => {
             let p = 0, w = 0, d = 0, l = 0, gf = 0, ga = 0;
             // Only count pool stage matches towards standings
             const tMatches = MOCK_DATA.matches.filter(m => m.status === 'finished' && m.stage === 'pool' && (m.teamA_id === t.id || m.teamB_id === t.id));
@@ -89,9 +92,44 @@ const api = {
                 else if (selfScore === oppScore) d++;
                 else l++;
             });
+            
+            // Apply Manual Stats Customization (if admin altered them)
+            if (t.manual_stats) {
+                p += t.manual_stats.p || 0;
+                w += t.manual_stats.w || 0;
+                d += t.manual_stats.d || 0;
+                l += t.manual_stats.l || 0;
+                gf += t.manual_stats.gf || 0;
+                ga += t.manual_stats.ga || 0;
+            }
+
             return { name: t.name, p, w, d, l, gf, ga, gd: gf-ga, pts: (w*3) + d };
         });
-        return { data: standings.sort((a,b) => b.pts - a.pts || b.gd - a.gd) };
+
+        // 1. Sort teams using Points (highest first) then Goal Difference (highest first)
+        standings.sort((a,b) => {
+            if (b.pts !== a.pts) return b.pts - a.pts;
+            return b.gd - a.gd;
+        });
+
+        // 2. Assign positions handling ties fully
+        let currentPos = 1;
+        for (let i = 0; i < standings.length; i++) {
+            if (i > 0) {
+                const prev = standings[i-1];
+                const curr = standings[i];
+                // Fully Tied condition
+                if (curr.pts === prev.pts && curr.gd === prev.gd) {
+                    curr.position = prev.position; 
+                } else {
+                    curr.position = i + 1; // skip next positions accordingly
+                }
+            } else {
+                standings[i].position = 1;
+            }
+        }
+
+        return { data: standings };
     },
 
     getTopScorers: async (catId) => {
@@ -116,7 +154,7 @@ const api = {
         return { data: newPool };
     },
     createTeam: async (team) => {
-        const newTeam = { ...team, id: 't' + Date.now(), logo: `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(team.name)}` };
+        const newTeam = { ...team, id: 't' + Date.now(), logo: `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(team.name)}`, manual_stats: {p:0, w:0, d:0, l:0, gf:0, ga:0} };
         MOCK_DATA.teams.push(newTeam);
         api.persist();
         return { data: newTeam };
@@ -128,6 +166,19 @@ const api = {
         return { data: newPlayer };
     },
     scheduleMatch: async (match) => {
+        // Time Overlapping Check (1 hour duration)
+        const newTime = new Date(match.time).getTime();
+        const pitchMatches = MOCK_DATA.matches.filter(m => m.pitch === match.pitch && m.status !== 'finished');
+        
+        for (let pm of pitchMatches) {
+            const extTime = new Date(pm.time).getTime();
+            const elapsed = Math.abs(newTime - extTime);
+            // If less than 60 minutes apart (3600000ms), it's an overlap
+            if (elapsed < 3600000) {
+                return { error: 'Time Overlap: Another match is scheduled on this pitch at a conflicting time.' };
+            }
+        }
+
         const newMatch = { ...match, id: 'm' + Date.now(), scoreA: 0, scoreB: 0, status: 'upcoming' };
         MOCK_DATA.matches.push(newMatch);
         api.persist();
@@ -144,11 +195,30 @@ const api = {
         }
         return { data: match };
     },
+    updateTeamStats: async (id, stats) => {
+        const team = MOCK_DATA.teams.find(t => t.id === id);
+        if (team) {
+            team.manual_stats = {
+                p: parseInt(stats.p) || 0,
+                w: parseInt(stats.w) || 0,
+                d: parseInt(stats.d) || 0,
+                l: parseInt(stats.l) || 0,
+                gf: parseInt(stats.gf) || 0,
+                ga: parseInt(stats.ga) || 0
+            };
+            api.persist();
+            return { data: team };
+        }
+        return { error: 'Team not found' };
+    },
     
     // 4️⃣ ADMIN USER CONTROL
-    manageStaff: async (email, pass, action = 'create') => {
-        if (action === 'create') MOCK_DATA.users.push({ email, password: pass, role: 'staff' });
+    manageStaff: async (email, pass, role, action = 'create') => {
+        if (action === 'create') MOCK_DATA.users.push({ email, password: pass, role: role || 'staff' });
         else MOCK_DATA.users = MOCK_DATA.users.filter(u => u.email !== email);
         api.persist();
+    },
+    getUsers: async () => {
+        return { data: MOCK_DATA.users };
     }
 };

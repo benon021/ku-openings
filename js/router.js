@@ -35,8 +35,26 @@ const router = {
     },
 
     updateNav: (active) => {
-        document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active'));
-        document.querySelectorAll(`a.nav-link[href="#${active}"]`).forEach(nav => nav.classList.add('active'));
+        // Update Active Nav Link
+        document.querySelectorAll('.nav-item').forEach(l => l.classList.remove('active'));
+        document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+        
+        // Map the route to the nav ID.
+        const path = active.replace('/', '');
+        let activeId = 'nav-item-hub';
+        let mobileId = 'mobile-nav-item-hub';
+        
+        if (path === 'matches') { activeId = 'nav-item-matches'; mobileId = 'mobile-nav-item-matches'; }
+        if (path === 'standings') { activeId = 'nav-item-standings'; mobileId = 'mobile-nav-item-standings'; }
+        if (path === 'knockouts') { activeId = 'nav-item-knockouts'; mobileId = 'mobile-nav-item-knockouts'; }
+        if (path === 'stats') { activeId = 'nav-item-stats'; mobileId = 'mobile-nav-item-stats'; }
+        if (path === 'control') { activeId = 'nav-item-control'; mobileId = 'mobile-nav-item-control'; }
+
+        const activeEl = document.getElementById(activeId);
+        if (activeEl) activeEl.classList.add('active');
+        
+        const mobileEl = document.getElementById(mobileId);
+        if (mobileEl) mobileEl.classList.add('active');
     },
 
     render: async (view, param) => {
@@ -46,6 +64,9 @@ const router = {
         // Fast swap without CSS transition trickery (since we use animate-in fade-in anyway)
         try {
             content.innerHTML = await views[view](param);
+            if (view === 'dashboardHub') {
+                app.initDashboardWidget();
+            }
         } catch (err) {
             console.error("Navigation Fault:", err);
             content.innerHTML = `<div style="text-align:center; padding: 2rem; color:hsl(var(--destructive));">ERROR: CRITICAL_SYSTEM_FAULT // ${view}</div>`;
