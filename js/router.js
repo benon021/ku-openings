@@ -69,7 +69,7 @@ const router = {
             }
         } catch (err) {
             console.error("Navigation Fault:", err);
-            content.innerHTML = `<div style="text-align:center; padding: 2rem; color:hsl(var(--destructive));">ERROR: CRITICAL_SYSTEM_FAULT // ${view}</div>`;
+            content.innerHTML = `<div style="text-align:center; padding: 4rem 2rem; color:hsl(var(--muted-foreground));"><svg width="48" height="48" style="margin:0 auto 1rem; opacity:0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.29 7 12 12 20.71 7"></polyline><line x1="12" y1="22" x2="12" y2="12"></line></svg><br>Currently organizing fixtures.<br>Check back later.</div>`;
         }
 
         window.scrollTo({ top: 0, behavior: 'auto' });

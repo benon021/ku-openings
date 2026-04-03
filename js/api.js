@@ -166,15 +166,21 @@ const api = {
         return { data: newPlayer };
     },
     scheduleMatch: async (match) => {
-        // Time Overlapping Check (1 hour duration)
+        // Time Overlapping Check
         const newTime = new Date(match.time).getTime();
+        const newDurationMs = (match.duration || 60) * 60000;
+        const newEndTime = newTime + newDurationMs;
+        
         const pitchMatches = MOCK_DATA.matches.filter(m => m.pitch === match.pitch && m.status !== 'finished');
         
         for (let pm of pitchMatches) {
             const extTime = new Date(pm.time).getTime();
-            const elapsed = Math.abs(newTime - extTime);
-            // If less than 60 minutes apart (3600000ms), it's an overlap
-            if (elapsed < 3600000) {
+            const extDurationMs = (pm.duration || 60) * 60000;
+            const extEndTime = extTime + extDurationMs;
+            
+            // Overlap condition:
+            // new match starts before existing match ends AND existing match starts before new match ends
+            if (newTime < extEndTime && extTime < newEndTime) {
                 return { error: 'Time Overlap: Another match is scheduled on this pitch at a conflicting time.' };
             }
         }
@@ -183,6 +189,15 @@ const api = {
         MOCK_DATA.matches.push(newMatch);
         api.persist();
         return { data: newMatch };
+    },
+    updateMatch: async (id, data) => {
+        const match = MOCK_DATA.matches.find(m => m.id === id);
+        if (match) {
+            Object.assign(match, data);
+            api.persist();
+            return { data: match };
+        }
+        return { error: 'Match not found' };
     },
     finalizeMatch: async (id, scoreA, scoreB, events = []) => {
         const match = MOCK_DATA.matches.find(m => m.id === id);
@@ -217,6 +232,17 @@ const api = {
         if (action === 'create') MOCK_DATA.users.push({ email, password: pass, role: role || 'staff' });
         else MOCK_DATA.users = MOCK_DATA.users.filter(u => u.email !== email);
         api.persist();
+    },
+    updateUser: async (oldEmail, newEmail, password, role) => {
+        const user = MOCK_DATA.users.find(u => u.email === oldEmail);
+        if (user) {
+            user.email = newEmail;
+            user.password = password;
+            user.role = role;
+            api.persist();
+            return { data: user };
+        }
+        return { error: 'User not found' };
     },
     getUsers: async () => {
         return { data: MOCK_DATA.users };

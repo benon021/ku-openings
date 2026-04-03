@@ -6,11 +6,83 @@ const globalState = {
     categories: [],
 };
 
+// Override native alerts to render custom Premium Toasts globally
+window.alert = (message) => {
+    let container = document.getElementById('toast-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'toast-container';
+        container.style.cssText = 'position:fixed; bottom:20px; right:20px; z-index:9999; display:flex; flex-direction:column; gap:10px; pointer-events:none;';
+        document.body.appendChild(container);
+    }
+    
+    const msgStr = String(message || '');
+    const isError = msgStr.toLowerCase().includes('error') || msgStr.toLowerCase().includes('invalid') || msgStr.toLowerCase().includes('failed');
+    const type = isError ? 'error' : 'success';
+    
+    const toast = document.createElement('div');
+    toast.style.cssText = `
+        background: rgba(20,20,30,0.95); backdrop-filter: blur(16px); color: #fff;
+        padding: 14px 20px; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+        font-size: 0.9rem; font-weight: 500; font-family: 'Space Grotesk', sans-serif;
+        border-left: 4px solid ${type === 'success' ? 'hsl(var(--accent))' : 'hsl(var(--destructive))'};
+        transform: translateX(120%); opacity: 0; transition: all 0.4s cubic-bezier(0.1, 0.8, 0.3, 1);
+        pointer-events: auto; display:flex; align-items:center; gap:8px; border:1px solid rgba(255,255,255,0.05); border-left-width:4px;
+    `;
+    
+    toast.innerHTML = `
+        ${type === 'success' ? '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="hsl(var(--accent))" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>' : 
+        '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="hsl(var(--destructive))" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>'}
+        <span>${message}</span>
+    `;
+    
+    container.appendChild(toast);
+    
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+        toast.style.transform = 'translateX(0)';
+        toast.style.opacity = '1';
+    }));
+    
+    setTimeout(() => {
+        toast.style.transform = 'translateX(120%)';
+        toast.style.opacity = '0';
+        setTimeout(() => toast.remove(), 400);
+    }, 4000); // 4 Seconds read time
+};
+
 const app = {
     init: async () => {
+        app.applyRoundFavicon();
         await app.syncCategories();
         await auth.init();
         router.init();
+    },
+
+    applyRoundFavicon: () => {
+        const link = document.querySelector("link[rel~='icon']");
+        if (!link) return;
+        const img = new Image();
+        img.crossOrigin = 'anonymous'; 
+        img.src = link.href;
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = 128; // high-res favicon
+            canvas.height = 128;
+            const ctx = canvas.getContext('2d');
+            
+            // Create a perfect circular mask
+            ctx.beginPath();
+            ctx.arc(64, 64, 64, 0, Math.PI * 2);
+            ctx.closePath();
+            ctx.clip();
+            
+            // Draw the original JPEG image inside the masked circle
+            ctx.drawImage(img, 0, 0, 128, 128);
+            
+            // Convert to a transparent PNG data uri and inject as the new favicon!
+            link.href = canvas.toDataURL('image/png');
+            link.type = 'image/png';
+        };
     },
 
     syncCategories: async () => {
@@ -116,7 +188,7 @@ const app = {
             router.closeModal();
             router.handleHashChange();
         } else {
-            alert('Invalid credentials. Try staff@ku.knt / 123');
+            alert('Invalid credentials. Please verify your details.');
         }
     },
 
@@ -168,13 +240,60 @@ const app = {
         const pitch = document.getElementById('m-pitch')?.value;
         const stage = document.getElementById('m-stage')?.value;
         const timeInput = document.getElementById('m-time')?.value;
+        const durInput = document.getElementById('m-dur')?.value;
         if (a === b) return alert('Please select two different teams');
         if (!timeInput) return alert('Please select a match time to prevent overlapping');
         const { data: teams } = await api.getTeams('all');
         const teamAObj = teams.find(t => t.id === a);
-        const res = await api.scheduleMatch({ teamA_id: a, teamB_id: b, pitch: pitch || 'Pitch 1', category_id: teamAObj.category_id, stage, time: new Date(timeInput).toISOString() });
+        
+        // Convert hh:mm to a full date just for standard passing
+        const today = new Date();
+        const [hh, mm] = timeInput.split(':');
+        today.setHours(hh, mm, 0, 0);
+        
+        const res = await api.scheduleMatch({ teamA_id: a, teamB_id: b, pitch: pitch || 'Pitch 1', category_id: teamAObj.category_id, stage, time: today.toISOString(), duration: parseInt(durInput) || 60 });
         if (res.error) return alert(res.error);
         alert('Match scheduled successfully');
+        router.handleHashChange();
+    },
+
+    openEditMatchModal: async (id) => {
+        const { data: matches } = await api.getMatches('all', 'all');
+        const match = matches.find(m => m.id === id);
+        if(!match) return alert("Match not found");
+        
+        const html = `
+            <div style="text-align:center; margin-bottom:24px">
+                <h2 style="font-family:'Outfit',sans-serif; font-size:1.5rem; font-weight:700;">Edit Match</h2>
+                <p style="color:hsl(var(--muted-foreground)); font-size:0.9rem">Override posted details</p>
+            </div>
+            <form onsubmit="event.preventDefault(); app.submitMatchEdit('${id}')">
+                <label style="display:block; font-size:0.8rem; margin-bottom:4px">Home Score</label>
+                <input class="form-input" type="number" id="edit-m-a" value="${match.scoreA || 0}" required>
+                
+                <label style="display:block; font-size:0.8rem; margin-bottom:4px">Away Score</label>
+                <input class="form-input" type="number" id="edit-m-b" value="${match.scoreB || 0}" required>
+                
+                <label style="display:block; font-size:0.8rem; margin-bottom:4px">Status</label>
+                <select class="form-input" id="edit-m-status">
+                    <option value="upcoming" ${match.status === 'upcoming' ? 'selected' : ''}>Upcoming</option>
+                    <option value="finished" ${match.status === 'finished' ? 'selected' : ''}>Finished</option>
+                </select>
+                
+                <button type="submit" class="btn-full" style="background:hsl(var(--accent)); margin-top:16px;">Save Changes</button>
+            </form>
+        `;
+        document.getElementById('modal-port').innerHTML = html;
+        document.getElementById('modal-container').classList.remove('hidden');
+    },
+
+    submitMatchEdit: async (id) => {
+        const a = document.getElementById('edit-m-a')?.value;
+        const b = document.getElementById('edit-m-b')?.value;
+        const status = document.getElementById('edit-m-status')?.value;
+        await api.updateMatch(id, { scoreA: parseInt(a), scoreB: parseInt(b), status });
+        alert('Match overridden successfully');
+        document.getElementById('modal-container').classList.add('hidden');
         router.handleHashChange();
     },
 
@@ -202,6 +321,45 @@ const app = {
         if (res.error) return alert(res.error);
         alert('Team stats offset updated successfully');
         router.handleHashChange();
+    },
+
+    openEditUserModal: async (email) => {
+        const { data: users } = await api.getUsers();
+        const user = users.find(u => u.email === email);
+        if(!user) return alert("User not found");
+        
+        const html = `
+            <div style="text-align:center; margin-bottom:24px">
+                <h2 style="font-family:'Outfit',sans-serif; font-size:1.5rem; font-weight:700;">Edit User</h2>
+            </div>
+            <form onsubmit="event.preventDefault(); app.submitUserEdit('${email}')">
+                <label style="display:block; font-size:0.8rem; margin-bottom:4px">Email</label>
+                <input class="form-input" type="text" id="edit-u-email" value="${user.email}" required>
+                
+                <label style="display:block; font-size:0.8rem; margin-bottom:4px">Password</label>
+                <input class="form-input" type="text" id="edit-u-pass" value="${user.password}" required>
+                
+                <label style="display:block; font-size:0.8rem; margin-bottom:4px">Role</label>
+                <select class="form-input" id="edit-u-role">
+                    <option value="staff" ${user.role === 'staff' ? 'selected' : ''}>Staff</option>
+                    <option value="admin" ${user.role === 'admin' ? 'selected' : ''}>Admin</option>
+                </select>
+                
+                <button type="submit" class="btn-full" style="background:hsl(var(--accent)); margin-top:16px;">Save Changes</button>
+            </form>
+        `;
+        document.getElementById('modal-port').innerHTML = html;
+        document.getElementById('modal-container').classList.remove('hidden');
+    },
+
+    submitUserEdit: async (oldEmail) => {
+        const email = document.getElementById('edit-u-email')?.value;
+        const pass = document.getElementById('edit-u-pass')?.value;
+        const role = document.getElementById('edit-u-role')?.value;
+        await api.updateUser(oldEmail, email, pass, role);
+        alert('User updated successfully');
+        document.getElementById('modal-container').classList.add('hidden');
+        views.setTab(document.querySelector('.pill-badge.active'), 'users');
     },
 
     submitUser: async () => {

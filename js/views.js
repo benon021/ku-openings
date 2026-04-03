@@ -62,7 +62,9 @@ const views = {
 
                         <!-- Center Layout: Round Logo -->
                         <div class="hero-grid-logo">
-                            <img src="assets/logo.jpeg" alt="Vultures Team Logo" style="width:clamp(120px, 20vw, 220px); height:clamp(120px, 20vw, 220px); border-radius:50%; object-fit:cover; border:none; box-shadow:0 10px 40px rgba(0,0,0,0.6), 0 0 20px hsl(var(--primary)/0.2); background:#000;">
+                            <div class="wave-beacon">
+                                <img src="assets/logo.jpeg" alt="Vultures Team Logo" style="width:clamp(120px, 20vw, 220px); height:clamp(120px, 20vw, 220px); border-radius:50%; object-fit:cover; border:none; box-shadow:0 10px 40px rgba(0,0,0,0.6), 0 0 20px hsl(var(--primary)/0.2); background:#000;">
+                            </div>
                         </div>
 
                         <!-- Right Layout: Weather and Maps -->
@@ -162,40 +164,51 @@ const views = {
             const { data: std } = await api.getStandings(pool.id);
             const categoryName = pool.category_id === 'cat-m' ? 'Mens' : 'Ladies';
             html += `
-                <div class="card card-gradient" style="padding:0; overflow-x:auto;">
-                    <div style="padding:1rem">
-                        <h3 style="font-size:1.1rem; font-weight:600; font-family:'Space Grotesk',sans-serif">Pool ${pool.name.toUpperCase()} <span style="color:hsl(var(--muted-foreground));font-weight:400;font-size:0.9rem;">(${categoryName})</span></h3>
+                <div class="card card-gradient" style="padding:0; overflow-x:hidden;">
+                    <div style="padding:1rem 1rem 0.5rem 1rem">
+                        <h3 style="font-size:1.1rem; font-weight:600; font-family:'Space Grotesk',sans-serif">Pool ${(pool.name || 'Unnamed').toUpperCase()} <span style="color:hsl(var(--muted-foreground));font-weight:400;font-size:0.9rem;">(${categoryName})</span></h3>
                     </div>
-                    <table style="width:100%; border-collapse:collapse; font-size:0.85rem; min-width: 600px;">
+                    <style>
+                        .table-compact { width:100%; border-collapse:collapse; font-size:0.8rem; font-family:'Space Grotesk',sans-serif; }
+                        .table-compact th { text-transform:uppercase; font-size:0.65rem; padding:0.4rem 0.2rem; border-bottom: 1px solid hsl(var(--border)); color:hsl(var(--muted-foreground)); }
+                        .table-compact td { padding:0.6rem 0.2rem; }
+                        .tr-hover { border-bottom: 1px solid hsl(var(--border)/0.5); cursor:pointer; transition: background 0.2s ease; }
+                        .tr-hover:hover { background: rgba(255,255,255,0.04); }
+                    </style>
+                    <table class="table-compact">
                         <thead>
-                            <tr style="border-bottom: 1px solid hsl(var(--border)); color:hsl(var(--muted-foreground));">
-                                <th style="padding:0.5rem 1rem; text-align:left; font-weight:500;">#</th>
-                                <th style="padding:0.5rem 0.5rem; text-align:left; font-weight:500;">Team</th>
-                                <th style="padding:0.5rem; text-align:center; font-weight:500;">P</th>
-                                <th style="padding:0.5rem; text-align:center; font-weight:500;">W</th>
-                                <th style="padding:0.5rem; text-align:center; font-weight:500;">D</th>
-                                <th style="padding:0.5rem; text-align:center; font-weight:500;">L</th>
-                                <th style="padding:0.5rem; text-align:center; font-weight:500;">GF</th>
-                                <th style="padding:0.5rem; text-align:center; font-weight:500;">GA</th>
-                                <th style="padding:0.5rem; text-align:center; font-weight:500;">GD</th>
-                                <th style="padding:0.5rem 1rem; text-align:right; font-weight:500;">Pts</th>
+                            <tr>
+                                <th style="text-align:center; width:30px;">#</th>
+                                <th style="text-align:left;">Team</th>
+                                <th style="text-align:center;">P</th>
+                                <th style="text-align:center;">W</th>
+                                <th style="text-align:center;">D</th>
+                                <th style="text-align:center;">L</th>
+                                <th style="text-align:center; color:hsl(var(--foreground));">GF</th>
+                                <th style="text-align:center; color:hsl(var(--foreground));">GA</th>
+                                <th style="text-align:center; color:hsl(var(--foreground));">GD</th>
+                                <th style="text-align:right; padding-right:1rem;">Pts</th>
                             </tr>
                         </thead>
                         <tbody>
-                            ${std.map((s, i) => `
-                                <tr style="border-bottom: 1px solid hsl(var(--border) / 0.5);">
-                                    <td style="padding:0.75rem 1rem;">${s.position}</td>
-                                    <td style="padding:0.75rem 0.5rem; font-weight:600;">${s.name.toUpperCase()}</td>
-                                    <td style="padding:0.75rem; text-align:center; color:hsl(var(--muted-foreground))">${s.p}</td>
-                                    <td style="padding:0.75rem; text-align:center;">${s.w}</td>
-                                    <td style="padding:0.75rem; text-align:center;">${s.d}</td>
-                                    <td style="padding:0.75rem; text-align:center;">${s.l}</td>
-                                    <td style="padding:0.75rem; text-align:center; color:hsl(var(--muted-foreground))">${s.gf}</td>
-                                    <td style="padding:0.75rem; text-align:center; color:hsl(var(--muted-foreground))">${s.ga}</td>
-                                    <td style="padding:0.75rem; text-align:center;">${s.gd}</td>
-                                    <td style="padding:0.75rem 1rem; text-align:right; font-weight:700; color:hsl(var(--primary))">${s.pts}</td>
+                            ${(std || []).map((s, i) => {
+                                const isTop = s.position <= 2;
+                                const isBottom = s.position >= Math.max(3, (std || []).length - 1);
+                                const posColor = isTop ? 'color:hsl(var(--accent));font-weight:700;' : (isBottom ? 'color:hsl(var(--destructive));' : 'color:hsl(var(--muted-foreground));');
+                                return `
+                                <tr class="tr-hover">
+                                    <td style="text-align:center; font-size:0.75rem; ${posColor}">${s.position || i+1}</td>
+                                    <td style="font-weight:600; font-size:0.8rem; color:${isTop ? 'hsl(var(--foreground))' : 'hsl(var(--muted-foreground))'}">${(s.name || 'Unknown').toUpperCase()}</td>
+                                    <td style="text-align:center; opacity:0.6;">${s.p || 0}</td>
+                                    <td style="text-align:center;">${s.w || 0}</td>
+                                    <td style="text-align:center;">${s.d || 0}</td>
+                                    <td style="text-align:center; color:hsl(var(--destructive))">${s.l || 0}</td>
+                                    <td style="text-align:center; color:hsl(var(--accent))">${s.gf || 0}</td>
+                                    <td style="text-align:center; opacity:0.6;">${s.ga || 0}</td>
+                                    <td style="text-align:center; font-weight:600; color:${(s.gd || 0) > 0 ? 'hsl(var(--accent))' : ((s.gd || 0) < 0 ? 'hsl(var(--destructive))' : 'hsl(var(--muted-foreground))')}">${(s.gd || 0) > 0 ? '+'+s.gd : (s.gd || 0)}</td>
+                                    <td style="text-align:right; font-weight:750; font-size:0.9rem; padding-right:1rem; color:hsl(var(--primary))">${s.pts || 0}</td>
                                 </tr>
-                            `).join('')}
+                            `}).join('')}
                         </tbody>
                     </table>
                 </div>`;
@@ -257,10 +270,11 @@ const views = {
                     <span style="font-size:0.8rem; padding: 2px 8px; border-radius:12px; background: ${m.status === 'finished' ? 'hsl(var(--accent)/0.2)' : 'hsl(var(--primary)/0.2)'}; color:${m.status === 'finished' ? 'hsl(var(--accent))' : 'hsl(var(--primary))'}">${m.status.toUpperCase()}</span>
                     <span style="font-size:0.8rem; color:hsl(var(--muted-foreground))">${m.pitch} ${m.stage && m.stage !== 'pool' ? ' • ' + m.stage.toUpperCase() : ''}</span>
                 </div>
-                <div style="display:flex; justify-content:space-between; align-items:center; font-weight:600;">
+                <div style="display:flex; justify-content:space-between; align-items:center; font-weight:600; position:relative;">
                     <span style="width:40%; text-align:left;">${m.teamA?.name || 'TBA'}</span>
                     <span style="font-size:1.25rem; color:${m.status === 'finished' ? 'hsl(var(--primary))' : 'hsl(var(--muted-foreground))'}">${m.status === 'finished' ? m.scoreA + ' - ' + m.scoreB : 'vs'}</span>
                     <span style="width:40%; text-align:right;">${m.teamB?.name || 'TBA'}</span>
+                    ${auth.role === 'admin' ? `<button onclick="event.preventDefault(); app.openEditMatchModal('${m.id}')" style="position:absolute; right:-10px; top:-30px; background:transparent; border:none; color:hsl(var(--muted-foreground)); cursor:pointer;" title="Edit"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg></button>` : ''}
                 </div>
             </a>
         `).join('') + `</div>` : views.emptyState('No fixtures', '');
@@ -437,7 +451,10 @@ const views = {
                 <option value="Pitch A">Pitch A</option>
                 <option value="Pitch B">Pitch B</option>
             </select>
-            <input class="form-input" type="datetime-local" id="m-time" required>
+            <div style="display:flex; gap:8px;">
+                <input class="form-input" type="time" id="m-time" title="Start Time" required>
+                <input class="form-input" type="number" id="m-dur" placeholder="Duration (mins)" value="60" required>
+            </div>
             <button class="btn-full" onclick="app.submitMatch()">Schedule Fixture</button>
         </div>`,
 
@@ -466,7 +483,10 @@ const views = {
                     ${users.map(u => `
                         <div style="display:flex; justify-content:space-between; padding:4px 0;">
                             <span>${u.email}</span>
-                            <span style="color:hsl(var(--primary))">${u.role}</span>
+                            <div style="display:flex; gap:8px; align-items:center;">
+                                <span style="color:hsl(var(--primary))">${u.role}</span>
+                                <button onclick="app.openEditUserModal('${u.email}')" style="background:none; border:none; cursor:pointer; color:hsl(var(--accent)); padding:0;" title="Edit"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg></button>
+                            </div>
                         </div>
                     `).join('')}
                 </div>
@@ -550,21 +570,49 @@ const views = {
             <p style="color:hsl(var(--muted-foreground)); font-size:0.9rem">${desc}</p>
         </div>`,
 
-    categoryDropdown: () => `
-        <select class="modern-select" onchange="app.setCategory(this.value)">
-            <option value="all" ${globalState.currentCategoryId === 'all' ? 'selected' : ''}>All Categories</option>
-            <option value="cat-m" ${globalState.currentCategoryId === 'cat-m' ? 'selected' : ''}>Mens</option>
-            <option value="cat-w" ${globalState.currentCategoryId === 'cat-w' ? 'selected' : ''}>Ladies</option>
-        </select>
-    `,
+    categoryDropdown: () => {
+        const current = globalState.currentCategoryId;
+        const opts = [{v:'all', l:'All Categories'}, {v:'cat-m', l:'Mens'}, {v:'cat-w', l:'Ladies'}];
+        const selected = opts.find(o => o.v === current).l;
+        return `
+        <div style="position:relative; width:160px; font-family:'Space Grotesk',sans-serif;" tabindex="0" onblur="setTimeout(() => this.querySelector('.dd-menu').classList.add('hidden'), 150)">
+            <div class="modern-select" style="display:flex; justify-content:space-between; align-items:center;" onclick="this.nextElementSibling.classList.toggle('hidden')">
+                <span>${selected}</span>
+            </div>
+            <div class="dd-menu hidden" style="position:absolute; top:110%; left:0; right:0; background:rgba(20,20,30,0.95); backdrop-filter:blur(10px); border:1px solid rgba(255,255,255,0.1); border-radius:10px; z-index:1000; box-shadow:0 10px 30px rgba(0,0,0,0.5); overflow:hidden;">
+                ${opts.map(o => `
+                    <div style="padding:10px 16px; font-size:0.85rem; cursor:pointer; color:${o.v === current ? 'hsl(var(--primary))' : 'hsl(var(--foreground))'}; background:${o.v === current ? 'rgba(255,255,255,0.05)' : 'transparent'};"
+                         onmouseover="this.style.background='rgba(255,255,255,0.1)'"
+                         onmouseout="this.style.background='${o.v === current ? 'rgba(255,255,255,0.05)' : 'transparent'}'"
+                         onclick="app.setCategory('${o.v}')">
+                        ${o.l}
+                    </div>
+                `).join('')}
+            </div>
+        </div>`;
+    },
 
-    pitchDropdown: () => `
-        <select class="modern-select" onchange="app.setPitch(this.value)">
-            <option value="all" ${globalState.currentPitchId === 'all' ? 'selected' : ''}>All Fields</option>
-            <option value="Pitch A" ${globalState.currentPitchId === 'Pitch A' ? 'selected' : ''}>Pitch A</option>
-            <option value="Pitch B" ${globalState.currentPitchId === 'Pitch B' ? 'selected' : ''}>Pitch B</option>
-        </select>
-    `,
+    pitchDropdown: () => {
+        const current = globalState.currentPitchId;
+        const opts = [{v:'all', l:'All Fields'}, {v:'Pitch A', l:'Pitch A'}, {v:'Pitch B', l:'Pitch B'}];
+        const selected = opts.find(o => o.v === current).l;
+        return `
+        <div style="position:relative; width:140px; font-family:'Space Grotesk',sans-serif;" tabindex="0" onblur="setTimeout(() => this.querySelector('.dd-menu').classList.add('hidden'), 150)">
+            <div class="modern-select" style="display:flex; justify-content:space-between; align-items:center;" onclick="this.nextElementSibling.classList.toggle('hidden')">
+                <span>${selected}</span>
+            </div>
+            <div class="dd-menu hidden" style="position:absolute; top:110%; left:0; right:0; background:rgba(20,20,30,0.95); backdrop-filter:blur(10px); border:1px solid rgba(255,255,255,0.1); border-radius:10px; z-index:1000; box-shadow:0 10px 30px rgba(0,0,0,0.5); overflow:hidden;">
+                ${opts.map(o => `
+                    <div style="padding:10px 16px; font-size:0.85rem; cursor:pointer; color:${o.v === current ? 'hsl(var(--primary))' : 'hsl(var(--foreground))'}; background:${o.v === current ? 'rgba(255,255,255,0.05)' : 'transparent'};"
+                         onmouseover="this.style.background='rgba(255,255,255,0.1)'"
+                         onmouseout="this.style.background='${o.v === current ? 'rgba(255,255,255,0.05)' : 'transparent'}'"
+                         onclick="app.setPitch('${o.v}')">
+                        ${o.l}
+                    </div>
+                `).join('')}
+            </div>
+        </div>`;
+    },
 
     loginForm: () => `
         <div style="text-align:center; margin-bottom:24px">
@@ -580,17 +628,13 @@ const views = {
 
         <form style="text-align:left" onsubmit="app.handleLogin(event)">
             <label style="display:block; font-size:0.8rem; color:hsl(var(--muted-foreground)); margin-bottom:4px">Username</label>
-            <input class="form-input" type="text" id="login-email" placeholder="e.g. greensharks" required>
+            <input class="form-input" type="text" id="login-email" placeholder="e.g. admin" required>
             
             <label style="display:block; font-size:0.8rem; color:hsl(var(--muted-foreground)); margin-bottom:4px">Password</label>
             <input class="form-input" type="password" id="login-pass" placeholder="••••••••" required>
             
             <button type="submit" class="btn-full" style="margin-top:16px;">Login</button>
         </form>
-        
-        <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid hsl(var(--border)); text-align: center;">
-             <button onclick="app.demoBypass()" style="color:hsl(var(--muted-foreground)); font-size:0.8rem; text-decoration:underline">Bypass / Auto-Login as Admin</button>
-        </div>
     `
 };
 
