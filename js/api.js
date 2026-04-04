@@ -11,36 +11,97 @@ if (typeof supabase !== 'undefined') {
 
 // 🏛️ PERSISTENT SEED DATA
 const MOCK_DATA = {
-    categories: [{ id: 'cat-m', name: 'Men' }, { id: 'cat-w', name: 'Women' }],
+    categories: [{ id: 'cat-m', name: 'Men' }, { id: 'cat-w', name: 'Ladies' }],
     pools: JSON.parse(localStorage.getItem('KU_POOLS')) || [
-        { id: 'p1', name: 'A', category_id: 'cat-m' },
-        { id: 'p2', name: 'B', category_id: 'cat-m' },
-        { id: 'p3', name: 'A', category_id: 'cat-w' }
+        { id: 'p-m-a', name: 'A', category_id: 'cat-m' },
+        { id: 'p-m-b', name: 'B', category_id: 'cat-m' },
+        { id: 'p-m-c', name: 'C', category_id: 'cat-m' },
+        { id: 'p-m-d', name: 'D', category_id: 'cat-m' },
+        { id: 'p-m-e', name: 'E', category_id: 'cat-m' },
+        { id: 'p-m-f', name: 'F', category_id: 'cat-m' },
+        { id: 'p-m-g', name: 'G', category_id: 'cat-m' },
+        { id: 'p-w-a', name: 'A', category_id: 'cat-w' },
+        { id: 'p-w-b', name: 'B', category_id: 'cat-w' },
+        { id: 'p-w-c', name: 'C', category_id: 'cat-w' },
+        { id: 'p-w-d', name: 'D', category_id: 'cat-w' }
     ],
     teams: JSON.parse(localStorage.getItem('KU_TEAMS')) || [
-        { id: 't1', name: 'LAKE CITY HC', category_id: 'cat-m', pool_id: 'p1', logo: 'https://api.dicebear.com/7.x/identicon/svg?seed=lake' },
-        { id: 't2', name: 'RIVER WOLVES', category_id: 'cat-m', pool_id: 'p1', logo: 'https://api.dicebear.com/7.x/identicon/svg?seed=river' },
-        { id: 't3', name: 'TITAN HOCKEY', category_id: 'cat-m', pool_id: 'p1', logo: 'https://api.dicebear.com/7.x/identicon/svg?seed=titan' },
-        { id: 't4', name: 'STORM UNITED', category_id: 'cat-m', pool_id: 'p2', logo: 'https://api.dicebear.com/7.x/identicon/svg?seed=storm' },
-        { id: 't5', name: 'ROYAL KINGS', category_id: 'cat-m', pool_id: 'p2', logo: 'https://api.dicebear.com/7.x/identicon/svg?seed=royal' },
-        { id: 't6', name: 'VALKYRIES', category_id: 'cat-w', pool_id: 'p3', logo: 'https://api.dicebear.com/7.x/identicon/svg?seed=valk' }
-    ],
-    players: JSON.parse(localStorage.getItem('KU_PLAYERS')) || [
-        { id: 'pl1', name: 'Michael Jordan', jersey: 23, team_id: 't1' },
-        { id: 'pl2', name: 'LeBron James', jersey: 6, team_id: 't1' },
-        { id: 'pl3', name: 'Serena Williams', jersey: 1, team_id: 't6' }
-    ],
+        // LADIES
+        { id: 'tw-a1', name: 'TWINKLE B', category_id: 'cat-w', pool_id: 'p-w-a' },
+        { id: 'tw-a2', name: 'USIU', category_id: 'cat-w', pool_id: 'p-w-a' },
+        { id: 'tw-a3', name: 'ROYAL NOMADS', category_id: 'cat-w', pool_id: 'p-w-a' },
+        { id: 'tw-a4', name: 'WILD CATS', category_id: 'cat-w', pool_id: 'p-w-a' },
+        { id: 'tw-b1', name: 'AMIRA', category_id: 'cat-w', pool_id: 'p-w-b' },
+        { id: 'tw-b2', name: 'REBOUND', category_id: 'cat-w', pool_id: 'p-w-b' },
+        { id: 'tw-b3', name: 'VIGILANTEZ', category_id: 'cat-w', pool_id: 'p-w-b' },
+        { id: 'tw-c1', name: 'AMIRA MAMUUS', category_id: 'cat-w', pool_id: 'p-w-c' },
+        { id: 'tw-c2', name: 'SLIDERS -A', category_id: 'cat-w', pool_id: 'p-w-c' },
+        { id: 'tw-c3', name: 'TWINKLE -A', category_id: 'cat-w', pool_id: 'p-w-c' },
+        { id: 'tw-c4', name: 'BLAZERS', category_id: 'cat-w', pool_id: 'p-w-c' },
+        { id: 'tw-d1', name: 'TITANS', category_id: 'cat-w', pool_id: 'p-w-d' },
+        { id: 'tw-d2', name: 'MASTERS SLADES', category_id: 'cat-w', pool_id: 'p-w-d' },
+        { id: 'tw-d3', name: 'GHF', category_id: 'cat-w', pool_id: 'p-w-d' },
+        // MEN
+        { id: 'tm-a1', name: 'MASHUJAA -A', category_id: 'cat-m', pool_id: 'p-m-a' },
+        { id: 'tm-a2', name: 'TGG', category_id: 'cat-m', pool_id: 'p-m-a' },
+        { id: 'tm-a3', name: 'AVENGERS', category_id: 'cat-m', pool_id: 'p-m-a' },
+        { id: 'tm-a4', name: 'PARKLANDS', category_id: 'cat-m', pool_id: 'p-m-a' },
+        { id: 'tm-b1', name: 'MEXIMED DVT', category_id: 'cat-m', pool_id: 'p-m-b' },
+        { id: 'tm-b2', name: 'PANTHERS', category_id: 'cat-m', pool_id: 'p-m-b' },
+        { id: 'tm-b3', name: 'TUKO KADI', category_id: 'cat-m', pool_id: 'p-m-b' },
+        { id: 'tm-b4', name: 'VULTURES -A', category_id: 'cat-m', pool_id: 'p-m-b' },
+        { id: 'tm-c1', name: 'MASHUJAA -B', category_id: 'cat-m', pool_id: 'p-m-c' },
+        { id: 'tm-c2', name: 'MEXIMED PARKROAD', category_id: 'cat-m', pool_id: 'p-m-c' },
+        { id: 'tm-c3', name: 'DEKUT', category_id: 'cat-m', pool_id: 'p-m-c' },
+        { id: 'tm-c4', name: '1729', category_id: 'cat-m', pool_id: 'p-m-c' },
+        { id: 'tm-d1', name: 'IRAN', category_id: 'cat-m', pool_id: 'p-m-d' },
+        { id: 'tm-d2', name: 'REEBOK', category_id: 'cat-m', pool_id: 'p-m-d' },
+        { id: 'tm-d3', name: 'TROJANS', category_id: 'cat-m', pool_id: 'p-m-d' },
+        { id: 'tm-d4', name: 'KYU', category_id: 'cat-m', pool_id: 'p-m-d' },
+        { id: 'tm-e1', name: 'WOZA WOZA', category_id: 'cat-m', pool_id: 'p-m-e' },
+        { id: 'tm-e2', name: 'IMPALA -B', category_id: 'cat-m', pool_id: 'p-m-e' },
+        { id: 'tm-e3', name: 'GORILLAS', category_id: 'cat-m', pool_id: 'p-m-e' },
+        { id: 'tm-e4', name: 'MEXIMED -A', category_id: 'cat-m', pool_id: 'p-m-e' },
+        { id: 'tm-f1', name: 'WANG\'DU', category_id: 'cat-m', pool_id: 'p-m-f' },
+        { id: 'tm-f2', name: 'IMPALA -A', category_id: 'cat-m', pool_id: 'p-m-f' },
+        { id: 'tm-f3', name: 'WEKA MAWE', category_id: 'cat-m', pool_id: 'p-m-f' },
+        { id: 'tm-f4', name: 'GREENSHARKS', category_id: 'cat-m', pool_id: 'p-m-f' },
+        { id: 'tm-g1', name: 'WAZALENDO', category_id: 'cat-m', pool_id: 'p-m-g' },
+        { id: 'tm-g2', name: 'ARCHBEACON', category_id: 'cat-m', pool_id: 'p-m-g' },
+        { id: 'tm-g3', name: 'VULTURES -B', category_id: 'cat-m', pool_id: 'p-m-g' }
+    ].map(t => ({ ...t, logo: `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(t.name)}`, manual_stats: {p:0, w:0, d:0, l:0, gf:0, ga:0} })),
+    players: JSON.parse(localStorage.getItem('KU_PLAYERS')) || [],
     matches: JSON.parse(localStorage.getItem('KU_MATCHES')) || [
-        { id: 'm1', teamA_id: 't1', teamB_id: 't2', scoreA: 4, scoreB: 2, status: 'finished', pitch: 'Pitch A', time: new Date().toISOString(), category_id: 'cat-m', stage: 'pool' },
-        { id: 'm2', teamA_id: 't3', teamB_id: 't1', scoreA: 0, scoreB: 0, status: 'upcoming', pitch: 'Pitch B', time: new Date(Date.now() + 86400000).toISOString(), category_id: 'cat-m', stage: 'pool' }
+        // PITCH 1
+        { id: 'm1', teamA_id: 'tm-b2', teamB_id: 'tm-b4', scoreA: 0, scoreB: 0, status: 'live', pitch: 'Pitch 1', time: '2026-04-04T06:00:00Z', category_id: 'cat-m', stage: 'pool', current_quarter: 'Q1' },
+        { id: 'm2', teamA_id: 'tm-a1', teamB_id: 'tm-a3', scoreA: 0, scoreB: 0, status: 'upcoming', pitch: 'Pitch 1', time: '2026-04-04T06:15:00Z', category_id: 'cat-m', stage: 'pool', current_quarter: 'Not Started' },
+        { id: 'm3', teamA_id: 'tw-a1', teamB_id: 'tw-a2', scoreA: 0, scoreB: 0, status: 'upcoming', pitch: 'Pitch 1', time: '2026-04-04T06:30:00Z', category_id: 'cat-w', stage: 'pool', current_quarter: 'Not Started' },
+        { id: 'm4', teamA_id: 'tm-b2', teamB_id: 'tm-b3', scoreA: 0, scoreB: 0, status: 'upcoming', pitch: 'Pitch 1', time: '2026-04-04T06:45:00Z', category_id: 'cat-m', stage: 'pool', current_quarter: 'Not Started' },
+        { id: 'm5', teamA_id: 'tm-a2', teamB_id: 'tm-a3', scoreA: 0, scoreB: 0, status: 'upcoming', pitch: 'Pitch 1', time: '2026-04-04T07:00:00Z', category_id: 'cat-m', stage: 'pool', current_quarter: 'Not Started' },
+        { id: 'm6', teamA_id: 'tw-b2', teamB_id: 'tw-b3', scoreA: 0, scoreB: 0, status: 'upcoming', pitch: 'Pitch 1', time: '2026-04-04T07:15:00Z', category_id: 'cat-w', stage: 'pool', current_quarter: 'Not Started' },
+        { id: 'm7', teamA_id: 'tm-b1', teamB_id: 'tm-b4', scoreA: 0, scoreB: 0, status: 'upcoming', pitch: 'Pitch 1', time: '2026-04-04T07:30:00Z', category_id: 'cat-m', stage: 'pool', current_quarter: 'Not Started' },
+        { id: 'm8', teamA_id: 'tm-a1', teamB_id: 'tm-a4', scoreA: 0, scoreB: 0, status: 'upcoming', pitch: 'Pitch 1', time: '2026-04-04T07:45:00Z', category_id: 'cat-m', stage: 'pool', current_quarter: 'Not Started' },
+        
+        // PITCH 2
+        { id: 'm101', teamA_id: 'tm-d1', teamB_id: 'tm-d2', scoreA: 0, scoreB: 0, status: 'live', pitch: 'Pitch 2', time: '2026-04-04T06:00:00Z', category_id: 'cat-m', stage: 'pool', current_quarter: 'Q2' },
+        { id: 'm102', teamA_id: 'tm-e1', teamB_id: 'tm-e2', scoreA: 0, scoreB: 0, status: 'upcoming', pitch: 'Pitch 2', time: '2026-04-04T06:15:00Z', category_id: 'cat-m', stage: 'pool', current_quarter: 'Not Started' },
+        { id: 'm103', teamA_id: 'tw-c1', teamB_id: 'tw-c2', scoreA: 0, scoreB: 0, status: 'upcoming', pitch: 'Pitch 2', time: '2026-04-04T06:30:00Z', category_id: 'cat-w', stage: 'pool', current_quarter: 'Not Started' },
+        { id: 'm104', teamA_id: 'tm-g1', teamB_id: 'tm-g2', scoreA: 0, scoreB: 0, status: 'upcoming', pitch: 'Pitch 2', time: '2026-04-04T06:45:00Z', category_id: 'cat-m', stage: 'pool', current_quarter: 'Not Started' },
+        { id: 'm105', teamA_id: 'tm-d2', teamB_id: 'tm-d3', scoreA: 0, scoreB: 0, status: 'upcoming', pitch: 'Pitch 2', time: '2026-04-04T07:00:00Z', category_id: 'cat-m', stage: 'pool', current_quarter: 'Not Started' },
+        { id: 'm106', teamA_id: 'tm-e1', teamB_id: 'tm-e3', scoreA: 0, scoreB: 0, status: 'upcoming', pitch: 'Pitch 2', time: '2026-04-04T07:15:00Z', category_id: 'cat-m', stage: 'pool', current_quarter: 'Not Started' },
+
+
+        
+        // KNOCKOUTS
+        { id: 'mk-r16-1', teamA_id: null, teamB_id: null, scoreA: 0, scoreB: 0, status: 'upcoming', pitch: 'Pitch 1', time: '2026-04-04T11:00:00Z', category_id: 'cat-m', stage: 'r16', placeholderA: 'Pool A Winner', placeholderB: 'Pool G Runner Up' },
+        { id: 'mk-qf-1', teamA_id: null, teamB_id: null, scoreA: 0, scoreB: 0, status: 'upcoming', pitch: 'Pitch 1', time: '2026-04-04T12:30:00Z', category_id: 'cat-w', stage: 'qf', placeholderA: 'Ladies QF 1' }
     ],
-    events: JSON.parse(localStorage.getItem('KU_EVENTS')) || [
-        { match_id: 'm1', type: 'goal', player_name: 'Michael Jordan', team_id: 't1', minute: 15 }
-    ],
+    events: JSON.parse(localStorage.getItem('KU_EVENTS')) || [],
     users: JSON.parse(localStorage.getItem('KU_USERS')) || [
         { email: 'ku@admin.com', password: 'edition26', role: 'admin' }
     ]
 };
+
 
 const api = {
     useDemo: true, // Always start in Professional Demo mode for field readiness
@@ -160,9 +221,28 @@ const api = {
     },
     addPlayer: async (player) => {
         const newPlayer = { ...player, id: 'pl' + Date.now() };
+        if (!MOCK_DATA.players) MOCK_DATA.players = [];
         MOCK_DATA.players.push(newPlayer);
         api.persist();
         return { data: newPlayer };
+    },
+    deletePlayer: async (id) => {
+        const idx = MOCK_DATA.players.findIndex(p => p.id === id);
+        if (idx !== -1) {
+            MOCK_DATA.players.splice(idx, 1);
+            api.persist();
+            return { data: true };
+        }
+        return { error: 'Player not found' };
+    },
+    updatePlayer: async (id, data) => {
+        const p = MOCK_DATA.players.find(x => x.id === id);
+        if (p) {
+            Object.assign(p, data);
+            api.persist();
+            return { data: p };
+        }
+        return { error: 'Player not found' };
     },
     scheduleMatch: async (match) => {
         // Time Overlapping Check
@@ -205,8 +285,46 @@ const api = {
             match.scoreB = parseInt(scoreB);
             match.status = 'finished';
             MOCK_DATA.events.push(...events.map(e => ({ ...e, match_id: id })));
+            
+            // Auto-Next Logic: Set the next upcoming game on this pitch to LIVE
+            // Safety Guard: Only auto-start if the finalized match was the actual current live/next match
+            const next = MOCK_DATA.matches
+                .filter(m => m.pitch === match.pitch && m.status === 'upcoming')
+                .sort((a,b) => new Date(a.time) - new Date(b.time))[0];
+            
+            if (next) {
+                const now = new Date();
+                const nextTime = new Date(next.time);
+                // Only auto-start if we are within 30 mins of the next game's start time
+                // This prevents finishing an 8am game from accidentally starting a 4pm game
+                const diffMinutes = (nextTime - now) / 60000;
+                if (diffMinutes < 30) {
+                    next.status = 'live';
+                }
+            }
+            
             api.persist();
         }
+        return { data: match };
+    },
+    delayMatch: async (id, minutes) => {
+        const match = MOCK_DATA.matches.find(m => m.id === id);
+        if (!match) return { error: 'Match not found' };
+        
+        const shiftMs = parseInt(minutes) * 60000;
+        const pitch = match.pitch;
+        const startTime = new Date(match.time).getTime();
+
+        // Shift this and all SUBSEQUENT upcoming matches on this pitch
+        MOCK_DATA.matches.forEach(m => {
+            if (m.pitch === pitch && (m.status === 'upcoming' || m.id === id)) {
+                const t = new Date(m.time).getTime();
+                if (t >= startTime) {
+                    m.time = new Date(t + shiftMs).toISOString();
+                }
+            }
+        });
+        api.persist();
         return { data: match };
     },
     updateTeamStats: async (id, stats) => {
@@ -228,7 +346,15 @@ const api = {
     
     // 4️⃣ ADMIN USER CONTROL
     manageStaff: async (email, pass, role, action = 'create') => {
-        if (action === 'create') MOCK_DATA.users.push({ email, password: pass, role: role || 'staff' });
+        if (action === 'create') {
+            const exists = MOCK_DATA.users.find(u => u.email === email);
+            if (!exists) {
+                MOCK_DATA.users.push({ email, password: pass, role: role || 'staff' });
+            } else {
+                exists.password = pass; // Update password if already exists
+                exists.role = role || exists.role;
+            }
+        }
         else MOCK_DATA.users = MOCK_DATA.users.filter(u => u.email !== email);
         api.persist();
     },

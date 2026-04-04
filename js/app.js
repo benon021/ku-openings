@@ -391,28 +391,19 @@ const app = {
         const updateTime = () => {
             const timeEl = document.getElementById('widget-time');
             const dateEl = document.getElementById('widget-date');
-            const greetEl = document.getElementById('widget-greeting');
-            if (!timeEl) return; // View changed
+            if (!timeEl && !dateEl) return; 
 
             const now = new Date();
             let hours = now.getHours();
             const ampm = hours >= 12 ? 'PM' : 'AM';
-            hours = hours % 12 || 12; // 12hr format
-            const mins = now.getMinutes().toString().padStart(2, '0');
+            hours = hours % 12 || 12;
+            const minutes = String(now.getMinutes()).padStart(2, '0');
             
-            timeEl.innerHTML = `${hours.toString().padStart(2, '0')}:${mins} <span style="font-size:1.5rem; font-weight:600;">${ampm}</span>`;
-            
-            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-            dateEl.textContent = now.toLocaleDateString('en-US', options);
-
-            const hr = now.getHours();
-            let greeting = 'Nice evening';
-            if (hr < 12) greeting = 'Nice morning';
-            else if (hr < 17) greeting = 'Nice afternoon';
-            
-            const userDisplay = auth.user ? auth.user.email.split('@')[0] : 'Demo';
-            if (greetEl) {
-                greetEl.innerHTML = `${greeting},<br><span style="text-transform:capitalize">${userDisplay}</span>`;
+            if (timeEl) timeEl.innerHTML = `${hours}:${minutes} <span style="font-size:1.2rem; opacity:0.6; font-weight:600;">${ampm}</span>`;
+            if (dateEl) {
+                const day = now.toLocaleDateString('en-US', { weekday: 'long' });
+                const month = now.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
+                dateEl.textContent = `${day}, ${month}`;
             }
         };
         updateTime();
@@ -428,9 +419,12 @@ const app = {
                 const data = await res.json();
                 const w = data.current_weather;
                 if (w) {
-                    document.getElementById('widget-temp').textContent = `${Math.round(w.temperature)}°C`;
+                    const tempEl = document.getElementById('widget-temp');
+                    const condEl = document.getElementById('widget-condition');
+                    const iconEl = document.getElementById('widget-w-icon');
+
+                    if (tempEl) tempEl.textContent = `${Math.round(w.temperature)}°C`;
                     
-                    // Decode WMO code roughly
                     let condition = 'Clear sky';
                     let icon = '☀️';
                     if (w.weathercode >= 1 && w.weathercode <= 3) { condition = 'Partly cloudy'; icon = '⛅'; }
@@ -440,17 +434,15 @@ const app = {
                     else if (w.weathercode >= 80 && w.weathercode <= 82) { condition = 'Showers'; icon = '🌦️'; }
                     else if (w.weathercode >= 95) { condition = 'Thunderstorm'; icon = '⛈️'; }
                     
-                    document.getElementById('widget-condition').textContent = condition;
-                    document.getElementById('widget-w-icon').textContent = icon;
+                    if (condEl) condEl.textContent = condition;
+                    if (iconEl) iconEl.textContent = icon;
                 }
             } catch(e) {
-                console.error("Weather fetch failed", e);
-                const cond = document.getElementById('widget-condition');
-                if (cond) cond.textContent = 'Weather unavailable';
+                const condEl = document.getElementById('widget-condition');
+                if (condEl) condEl.textContent = 'Weather Unavailable';
             }
         };
         fetchWeather();
-        // Setup 30 minute polling interval for actual live weather changes
         const weatherTimer = setInterval(() => {
             if(!document.getElementById('widget-temp')) clearInterval(weatherTimer);
             else fetchWeather();
@@ -462,9 +454,14 @@ const app = {
         e.preventDefault();
         const email = document.getElementById('login-email').value;
         const pass = document.getElementById('login-pass').value;
-        if (await auth.login(email, pass)) {
+        const res = await auth.login(email, pass);
+        if (res) {
             router.closeModal();
-            router.handleHashChange();
+            if (res.role === 'team' && res.teamId) {
+                window.location.hash = `#/team/${res.teamId}`;
+            } else {
+                router.handleHashChange();
+            }
         } else {
             alert('Invalid credentials. Please verify your details.');
         }
@@ -542,35 +539,69 @@ const app = {
         
         const html = `
             <div style="text-align:center; margin-bottom:24px">
-                <h2 style="font-family:'Outfit',sans-serif; font-size:1.5rem; font-weight:700;">Edit Match</h2>
-                <p style="color:hsl(var(--muted-foreground)); font-size:0.9rem">Override posted details</p>
+                <h2 style="font-family:'Outfit',sans-serif; font-size:1.5rem; font-weight:700;">Update Match</h2>
+                <p style="color:hsl(var(--muted-foreground)); font-size:0.9rem">${match.teamA?.name} vs ${match.teamB?.name}</p>
             </div>
             <form onsubmit="event.preventDefault(); app.submitMatchEdit('${id}')">
-                <label style="display:block; font-size:0.8rem; margin-bottom:4px">Home Score</label>
-                <input class="form-input" type="number" id="edit-m-a" value="${match.scoreA || 0}" required>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:12px;">
+                    <div>
+                        <label style="display:block; font-size:0.8rem; margin-bottom:4px">Home Score</label>
+                        <input class="form-input" type="number" id="edit-m-a" value="${match.scoreA || 0}" required>
+                    </div>
+                    <div>
+                        <label style="display:block; font-size:0.8rem; margin-bottom:4px">Away Score</label>
+                        <input class="form-input" type="number" id="edit-m-b" value="${match.scoreB || 0}" required>
+                    </div>
+                </div>
                 
-                <label style="display:block; font-size:0.8rem; margin-bottom:4px">Away Score</label>
-                <input class="form-input" type="number" id="edit-m-b" value="${match.scoreB || 0}" required>
+                <div style="margin-bottom:12px;">
+                    <label style="display:block; font-size:0.8rem; margin-bottom:4px">Match Status</label>
+                    <select class="form-input" id="edit-m-status">
+                        <option value="upcoming" ${match.status === 'upcoming' ? 'selected' : ''}>Upcoming</option>
+                        <option value="live" ${match.status === 'live' ? 'selected' : ''}>Live</option>
+                        <option value="finished" ${match.status === 'finished' ? 'selected' : ''}>Finished (FT)</option>
+                    </select>
+                </div>
+
+                <div style="margin-bottom:12px;">
+                    <label style="display:block; font-size:0.8rem; margin-bottom:4px; color:hsl(var(--primary))">Delay Shift (Minutes)</label>
+                    <input class="form-input" type="number" id="edit-m-delay" value="0" placeholder="Shifts this and all following games">
+                </div>
                 
-                <label style="display:block; font-size:0.8rem; margin-bottom:4px">Status</label>
-                <select class="form-input" id="edit-m-status">
-                    <option value="upcoming" ${match.status === 'upcoming' ? 'selected' : ''}>Upcoming</option>
-                    <option value="finished" ${match.status === 'finished' ? 'selected' : ''}>Finished</option>
-                </select>
-                
-                <button type="submit" class="btn-full" style="background:hsl(var(--accent)); margin-top:16px;">Save Changes</button>
+                <button type="submit" class="btn-full" style="background:hsl(var(--primary)); color:#000; font-weight:700; margin-top:16px; height:48px; font-size:1rem; border:none; box-shadow:0 10px 20px hsl(var(--primary)/0.2);">SAVE CHANGES</button>
             </form>
         `;
         document.getElementById('modal-port').innerHTML = html;
         document.getElementById('modal-container').classList.remove('hidden');
     },
 
+    startMatch: async (id) => {
+        if(!confirm('Start this match and move it to "Now Playing"?')) return;
+        await api.updateMatch(id, { status: 'live', current_quarter: '1st Quarter' });
+        router.handleHashChange();
+    },
+
     submitMatchEdit: async (id) => {
         const a = document.getElementById('edit-m-a')?.value;
         const b = document.getElementById('edit-m-b')?.value;
         const status = document.getElementById('edit-m-status')?.value;
-        await api.updateMatch(id, { scoreA: parseInt(a), scoreB: parseInt(b), status });
-        alert('Match overridden successfully');
+        const delay = document.getElementById('edit-m-delay')?.value;
+        
+        if (delay && parseInt(delay) !== 0) {
+            await api.delayMatch(id, delay);
+        }
+
+        if (status === 'finished') {
+            await api.finalizeMatch(id, a, b);
+        } else {
+            await api.updateMatch(id, { 
+                scoreA: parseInt(a), 
+                scoreB: parseInt(b), 
+                status
+            });
+        }
+        
+        alert('Match updated');
         document.getElementById('modal-container').classList.add('hidden');
         router.handleHashChange();
     },
@@ -649,7 +680,23 @@ const app = {
         alert('User registered successfully');
         document.getElementById('u-email').value = '';
         document.getElementById('u-pass').value = '';
-        views.setTab(document.querySelector('.pill-badge.active'), 'users'); // refresh view
+        views.setTab(document.querySelector('.pill-badge.active'), 'users'); 
+    },
+
+    submitPlayerToRoster: async (teamId) => {
+        const name = document.getElementById('new-p-name')?.value;
+        const jersey = document.getElementById('new-p-jersey')?.value;
+        if (!name || !jersey) return alert('Please enter both name and jersey number');
+        await api.addPlayer({ name, jersey, team_id: teamId });
+        alert('Player added to roster');
+        router.handleHashChange();
+    },
+
+    deletePlayerFromRoster: async (playerId, teamId) => {
+        if (!confirm('Are you sure you want to remove this player from the roster?')) return;
+        await api.deletePlayer(playerId);
+        alert('Player removed from roster');
+        router.handleHashChange();
     }
 };
 

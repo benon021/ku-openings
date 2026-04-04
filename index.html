@@ -553,6 +553,185 @@
             z-index: 50;
             box-shadow: 0 10px 32px rgba(0, 0, 0, 0.6);
         }
+
+        @keyframes color-cycle {
+
+            0%,
+            19.99% {
+                color: #ff3300;
+            }
+
+            /* Blaze Orange */
+            20%,
+            39.99% {
+                color: #ff00aa;
+            }
+
+            /* Hot Pink */
+            40%,
+            59.99% {
+                color: #bd00ff;
+            }
+
+            /* Toxic Purple */
+            60%,
+            79.99% {
+                color: #00f0ff;
+            }
+
+            /* Neon Cyan */
+            80%,
+            100% {
+                color: #00ff66;
+            }
+
+            /* Acid Green */
+        }
+
+        @keyframes tremble-explode {
+            0% {
+                transform: translate(0, 0) scale(1);
+                box-shadow: 0 0 0 transparent;
+            }
+
+            10% {
+                transform: translate(-0.5px, 0.5px) scale(1.002);
+            }
+
+            20% {
+                transform: translate(0.5px, -0.5px) scale(0.998);
+            }
+
+            30% {
+                transform: translate(-1px, 1px) scale(1.005);
+            }
+
+            40% {
+                transform: translate(1px, -1px) scale(0.995);
+            }
+
+            50% {
+                transform: translate(-1.5px, 1.5px) scale(1.01);
+            }
+
+            60% {
+                transform: translate(1.5px, -1.5px) scale(0.99);
+            }
+
+            70% {
+                transform: translate(-2px, 2px) scale(1.02);
+            }
+
+            74% {
+                transform: translate(2.5px, -2.5px) scale(0.97);
+            }
+
+            76% {
+                transform: translate(-3.5px, -2px) scale(1.03);
+            }
+
+            77% {
+                transform: translate(3px, 3px) scale(0.96);
+            }
+
+            /* SINGLE SOLID EXPLOSION BLAST */
+            78% {
+                transform: translate(0, 0) scale(1.2);
+                box-shadow: 0 0 80px currentColor;
+                /* Uses dynamic color from color-cycle */
+                border-radius: 50%;
+            }
+
+            /* FADE AND RESET */
+            100% {
+                transform: translate(0, 0) scale(1);
+                box-shadow: 0 0 0 transparent;
+            }
+        }
+
+        @keyframes emit-wave {
+            0% {
+                transform: scale(1);
+                opacity: 0;
+                background-color: currentColor;
+            }
+
+            77% {
+                transform: scale(1);
+                opacity: 0;
+                background-color: currentColor;
+            }
+
+            78% {
+                transform: scale(1.1);
+                opacity: 0.85;
+                background-color: currentColor;
+            }
+
+            100% {
+                transform: scale(4.0);
+                opacity: 0;
+                background-color: currentColor;
+            }
+        }
+
+        .wave-beacon {
+            position: relative;
+            z-index: 1;
+            display: inline-flex;
+            border-radius: 50%;
+            color: #ff3300;
+            /* Initial color matches first step of color-cycle */
+            animation: tremble-explode 6.5s infinite ease-in-out, color-cycle 32.5s infinite linear;
+        }
+
+        .wave-beacon::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border-radius: inherit;
+            background-color: hsl(var(--primary));
+            z-index: -1;
+            animation: emit-wave 6.5s infinite cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+
+        .btn-full {
+            width: 100%;
+            background-color: hsl(var(--primary));
+            color: hsl(var(--primary-foreground));
+            padding: 10px;
+            border-radius: 6px;
+            font-weight: 600;
+            margin-top: 8px;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* specific to the new layout */
+        .mobile-bottom-nav {
+            display: none;
+            position: fixed;
+            bottom: 1.5rem;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 92%;
+            border-radius: 9999px;
+            background: rgba(20, 20, 24, 0.85);
+            /* Slightly darker glass */
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 0.5rem 1rem;
+            justify-content: space-around;
+            align-items: center;
+            z-index: 50;
+            box-shadow: 0 10px 32px rgba(0, 0, 0, 0.6);
+        }
     </style>
 </head>
 

@@ -1,14 +1,45 @@
-// js/views.js — Clean Replica Dashboard Views
+// js/views.js — Automated Tournament Dashboard
 
 const views = {
+    formatTime: (isoString) => {
+        if (!isoString) return '--:--';
+        const date = new Date(isoString);
+        return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+    },
 
     // ─── HUB (Home) ───
     dashboardHub: async () => {
-        const catId = globalState.currentCategoryId;
-        const pitchId = globalState.currentPitchId;
-        const { data: matches } = await api.getMatches(catId, pitchId);
-        const upcoming = matches.filter(m => m.status === 'upcoming').slice(0, 3);
-        const finished = matches.filter(m => m.status === 'finished').slice(-3).reverse();
+        const { data: matches } = await api.getMatches('all', 'all');
+        const todayStr = '2026-04-04'; // Dynamic logic could be new Date().toISOString().split('T')[0]
+        
+        const todayMatches = matches.filter(m => m.time.startsWith(todayStr)).sort((a,b) => new Date(a.time) - new Date(b.time));
+        const live = todayMatches.filter(m => m.status === 'live');
+        
+        const pitch1 = todayMatches.filter(m => m.pitch === 'Pitch 1');
+        const pitch2 = todayMatches.filter(m => m.pitch === 'Pitch 2');
+
+        const renderMiniList = (list) => list.length ? list.map(m => `
+            <div style="padding: 12px 16px; border-bottom: 1px solid hsl(var(--border)/0.3); display:flex; justify-content:space-between; align-items:center; ${m.status === 'live' ? 'background:hsl(var(--primary)/0.05);' : ''}">
+                <div style="flex:1;">
+                    <div style="color:hsl(var(--primary)); font-weight:700; font-size:0.7rem; margin-bottom:2px;">${views.formatTime(m.time)}</div>
+                    <div style="font-weight:600; font-size:0.85rem;">${m.teamA?.name || 'TBA'} <span style="color:hsl(var(--muted-foreground)); font-weight:400;">vs</span> ${m.teamB?.name || 'TBA'}</div>
+                </div>
+                <div style="text-align:right; display:flex; align-items:center; gap:12px;">
+                    <div style="text-align:right;">
+                        <div style="display:flex; align-items:center; gap:6px; justify-content:flex-end;">
+                            ${m.status === 'live' ? '<div class="live-dot" style="background:hsl(var(--destructive))"></div>' : ''}
+                            <span style="font-size:0.65rem; font-weight:700; text-transform:uppercase; color:${m.status === 'live' ? 'hsl(var(--destructive))' : (m.status === 'finished' ? 'hsl(var(--accent))' : 'hsl(var(--muted-foreground))')}">${m.status.toUpperCase()}</span>
+                        </div>
+                        ${m.status === 'finished' ? `<div style="font-weight:800; font-size:0.9rem; color:hsl(var(--primary));">${m.scoreA} - ${m.scoreB}</div>` : ''}
+                    </div>
+                    ${auth.role === 'admin' ? `
+                        <button onclick="app.openEditMatchModal('${m.id}')" style="background:none; border:none; color:hsl(var(--muted-foreground)); cursor:pointer; padding:4px;" title="Edit">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+                        </button>
+                    ` : ''}
+                </div>
+            </div>
+        `).join('') : '<div style="padding:16px; color:hsl(var(--muted-foreground)); font-size:0.85rem;">No games scheduled for this pitch today.</div>';
 
         return `
             <div class="view-enter animate-in fade-in zoom-in-95" style="animation-duration:0.3s">
@@ -20,120 +51,161 @@ const views = {
                         align-items: stretch;
                         text-align: left;
                     }
-                    .hero-grid-title { justify-self: start; }
-                    .hero-grid-logo { justify-self: center; align-self: center; }
-                    .hero-grid-weather { justify-self: end; text-align: right; }
-                    
                     @media (max-width: 768px) {
-                        .hero-layout-grid {
-                            grid-template-columns: 1fr 1fr;
-                            grid-template-rows: auto auto;
+                        .hero-layout-grid { grid-template-columns: 1fr 1fr; grid-template-rows: auto auto; }
+                    }
+                    .collapsible-trigger {
+                        padding: 14px 16px;
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                        cursor: pointer;
+                        background: hsl(var(--card));
+                        border-radius: var(--radius);
+                        border: 1px solid hsl(var(--border));
+                        transition: all 0.2s;
+                        user-select: none;
+                    }
+                    .collapsible-trigger:hover { background: hsl(var(--accent)/0.05); }
+                    .collapsible-content.hidden { display: none; }
+                    .hero-grid {
+                        display: grid;
+                        grid-template-columns: 1fr;
+                        gap: 2rem;
+                        align-items: flex-start;
+                    }
+                    .hero-sub-row {
+                        display: grid;
+                        grid-template-columns: 100px 1fr;
+                        gap: 1.5rem;
+                        align-items: center;
+                        margin-top: 1rem;
+                    }
+                    @media (min-width: 992px) {
+                        .hero-grid {
+                            grid-template-columns: 1.2fr 1fr 1fr;
                             align-items: center;
                         }
-                        .hero-grid-title {
-                            grid-column: 1 / span 2;
-                        }
-                        .hero-grid-logo {
-                            grid-column: 1;
-                            justify-self: start;
-                        }
-                        .hero-grid-weather {
-                            grid-column: 2;
-                            justify-self: end;
+                        .hero-sub-row {
+                            display: contents; /* Become columns in parent grid */
                         }
                     }
                 </style>
-                <div class="card hero-gradient" style="margin-bottom: 1.5rem; padding: clamp(1rem, 3vw, 2rem); border-color: hsl(var(--border));">
-                    <div class="hero-layout-grid">
+
+                <!-- Realigned Responsive Hero (Screenshot Match) -->
+                <div class="card hero-gradient" style="margin-bottom: 2rem; padding: 2rem; border-color: hsl(var(--border)/0.5); border-radius: 24px;">
+                    <div class="hero-grid">
                         
-                        <!-- Left Layout: Radiant Title and Time -->
-                        <div class="hero-grid-title" style="display:flex; flex-direction:column; justify-content:space-between; height: 100%;">
-                            <div>
-                                <h1 class="text-gradient" style="font-size:clamp(1.5rem, 4vw, 2.2rem); line-height:1.15; margin-bottom:0.25rem; font-weight:800; font-family:'Outfit',sans-serif;">WELCOME TO KENYATTA UNIVERSITY OPEN TOURNAMENT 2026</h1>
-                                <div style="color:hsl(var(--muted-foreground)); font-size: clamp(0.75rem, 2vw, 0.9rem); margin-bottom: 1rem;">Tournament Management Edition</div>
+                        <!-- Block 1: Desktop Left / Mobile Top -->
+                        <div style="display:flex; flex-direction:column; justify-content:center;">
+                            <h1 style="color:hsl(var(--primary)); font-size:1.8rem; line-height:1.1; font-weight:900; font-family:'Outfit',sans-serif; margin:0 0 6px 0; text-transform:uppercase; letter-spacing:-0.5px;">
+                                WELCOME TO KENYATTA UNIVERSITY OPEN TOURNAMENT 2026
+                            </h1>
+                            <div style="color:rgba(255,255,255,0.4); font-size: 0.85rem; font-weight:600; margin-bottom:1rem;">Tournament Management Edition</div>
+                            <div style="font-size:2.2rem; font-weight:900; font-family:'Space Grotesk',sans-serif; color:#fff;" id="widget-time">
+                                --:-- <span style="font-size:1.2rem; opacity:0.6; font-weight:600;">--</span>
                             </div>
-                            
-                            <div style="margin-top:auto;">
-                                <div style="font-size:clamp(1.5rem, 5vw, 3rem); font-weight:800; font-family:'Outfit',sans-serif; line-height:1; display:flex; align-items:baseline; gap:4px;" id="widget-time">
-                                    --:-- <span style="font-size:clamp(0.8rem, 2vw, 1.2rem); font-weight:600;">--</span>
+                        </div>
+
+                        <!-- Sub-Row for Mobile (Logo & Weather side-by-side) -->
+                        <div class="hero-sub-row">
+                            <!-- Block 2: Desktop Center Logo -->
+                            <div style="display:flex; align-items:center; justify-content:center;">
+                                <div class="wave-beacon">
+                                    <div style="width:140px; height:140px; border-radius:50%; background:#fff; padding:3px; position:relative; z-index:2;">
+                                        <div style="width:100%; height:100%; border-radius:50%; overflow:hidden; background:#000;">
+                                            <img src="assets/logo.jpeg" style="width:100%; height:100%; object-fit:cover;">
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <!-- Center Layout: Round Logo -->
-                        <div class="hero-grid-logo">
-                            <div class="wave-beacon">
-                                <img src="assets/logo.jpeg" alt="Vultures Team Logo" style="width:clamp(120px, 20vw, 220px); height:clamp(120px, 20vw, 220px); border-radius:50%; object-fit:cover; border:none; box-shadow:0 10px 40px rgba(0,0,0,0.6), 0 0 20px hsl(var(--primary)/0.2); background:#000;">
-                            </div>
-                        </div>
+                            <!-- Block 3: Desktop Right Weather & Directions -->
+                            <div style="display:flex; flex-direction:column; align-items:flex-end; justify-content:center; gap:12px;">
+                                <div style="display:flex; align-items:center; gap:12px;">
+                                    <div id="widget-w-icon" style="font-size:2.2rem;">⛅</div>
+                                    <div id="widget-temp" style="font-size:2.5rem; font-weight:900; color:#fff; font-family:'Outfit',sans-serif; line-height:1;">--°C</div>
+                                </div>
+                                
+                                <div style="text-align:right; line-height:1.2;">
+                                    <div id="widget-condition" style="font-size:0.9rem; font-weight:700; color:#fff;">Partly cloudy</div>
+                                    <div style="font-size:0.75rem; font-weight:800; text-transform:uppercase; color:hsl(var(--primary)); letter-spacing:1px; margin:2px 0;">Nairobi</div>
+                                    <div id="widget-date" style="font-size:0.7rem; color:rgba(255,255,255,0.4); font-weight:500;">Saturday, April 4</div>
+                                </div>
 
-                        <!-- Right Layout: Weather and Maps -->
-                        <div class="hero-grid-weather" style="display:flex; flex-direction:column; justify-content:space-between; height:100%;">
-                            <div style="display:flex; align-items:center; gap:8px; justify-content:flex-end;">
-                                <div id="widget-w-icon" style="font-size:clamp(1.5rem, 4vw, 2.5rem);">⛅</div>
-                                <div style="font-size:clamp(1.5rem, 5vw, 3rem); font-weight:800; font-family:'Outfit',sans-serif;" id="widget-temp">--°C</div>
-                            </div>
-                            <div style="margin-top: 0.5rem;">
-                                <div style="font-size:clamp(0.8rem, 2vw, 1rem); margin-bottom:2px; color:hsl(var(--foreground))" id="widget-condition">Loading...</div>
-                                <div style="font-size:clamp(0.8rem, 2vw, 1rem); font-weight:600; margin-bottom:2px;">Nairobi</div>
-                                <div style="color:hsl(var(--muted-foreground)); font-size:clamp(0.65rem, 2vw, 0.8rem);" id="widget-date">Loading date...</div>
-                            </div>
-                            <div style="margin-top: 1rem;">
-                                 <button class="pill-badge" style="background:hsl(var(--primary)); color:#fff; border:none; padding: 6px 12px; font-size:0.75rem; box-shadow:0 0 10px hsl(var(--primary)/0.4); display:flex; align-items:center; gap:4px;" onclick="app.openLocation()">
-                                     <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
-                                     Directions
-                                 </button>
+                                <button onclick="app.openLocation()" style="background:hsl(var(--primary)); color:#000; font-weight:800; border-radius:50px; font-size:0.75rem; padding:8px 18px; margin:0; display:flex; align-items:center; gap:6px; border:none; box-shadow: 0 8px 15px rgba(255,102,0,0.2);">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="3"></circle><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line></svg>
+                                    Directions
+                                </button>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
-                    <h3 style="font-size:1.1rem; font-family:'Outfit',sans-serif; margin:0;">Live Feed</h3>
-                    ${views.pitchDropdown()}
-                </div>
-                <div class="grid-cards">
-                    <div class="card card-gradient">
-                        <div class="section-title">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="hsl(var(--primary))" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                            Upcoming Fixtures
+                <h3 style="font-size:1.1rem; font-family:'Outfit',sans-serif; margin-bottom:1rem; display:flex; align-items:center; gap:8px;">
+                    <div class="live-dot" style="background:hsl(var(--destructive))"></div> Now Playing
+                </h3>
+
+                <div class="grid-cards" style="margin-bottom: 2rem;">
+                    ${live.length ? live.map(m => `
+                        <div class="card card-gradient live-card" style="border-left: 4px solid hsl(var(--destructive));">
+                            <div style="display:flex; justify-content:space-between; margin-bottom: 1rem;">
+                                <span style="font-size:0.7rem; font-weight:800; color:hsl(var(--destructive)); text-transform:uppercase; letter-spacing:1px;">LIVE</span>
+                                <span style="font-size:0.75rem; color:hsl(var(--muted-foreground)); font-weight:600;">${m.pitch}</span>
+                            </div>
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 1rem;">
+                                <div style="text-align:left; flex:1;">
+                                    <div style="font-weight:700; font-size:1rem;">${m.teamA?.name || 'TBA'}</div>
+                                </div>
+                                <div style="padding: 0 1rem; font-size:1.8rem; font-weight:800; color:hsl(var(--primary)); font-family:'Outfit',sans-serif;">
+                                    ${m.scoreA} : ${m.scoreB}
+                                </div>
+                                <div style="text-align:right; flex:1;">
+                                    <div style="font-weight:700; font-size:1rem;">${m.teamB?.name || 'TBA'}</div>
+                                </div>
+                            </div>
+                            ${auth.role === 'admin' ? `
+                                <button class="btn-full" style="background:hsl(var(--accent)); color:#fff; font-size:0.75rem; padding:8px;" onclick="app.openEditMatchModal('${m.id}')">
+                                    Update Score / Delay
+                                </button>
+                            ` : ''}
                         </div>
-                        ${upcoming.length ? upcoming.map(m => `
-                            <a href="#/match/${m.id}" style="display:block; padding: 12px 0; border-bottom: 1px solid hsl(var(--border));">
-                                <div style="display:flex; justify-content:space-between; margin-bottom: 4px; font-size:0.8rem; color:hsl(var(--muted-foreground))">
-                                    <span>${m.pitch}</span>
-                                    <span>Upcoming${m.stage && m.stage !== 'pool' ? ' (' + m.stage.toUpperCase() + ')' : ''}</span>
-                                </div>
-                                <div style="display:flex; justify-content:space-between; align-items:center; font-weight:600; font-size:0.9rem;">
-                                    <span>${m.teamA?.name || 'TBA'}</span>
-                                    <span style="color:hsl(var(--muted-foreground))">vs</span>
-                                    <span>${m.teamB?.name || 'TBA'}</span>
-                                </div>
-                            </a>
-                        `).join('') : '<div style="color:hsl(var(--muted-foreground));font-size:0.9rem;padding:12px 0;">No upcoming fixtures</div>'}
-                        <div style="margin-top: 1rem;">
-                            <a href="#/matches" style="color: hsl(var(--primary)); font-size:0.9rem; display:inline-flex; align-items:center; gap:4px">View all fixtures &rarr;</a>
+                    `).join('') : `
+                        <div class="card" style="grid-column: 1 / -1; text-align:center; padding:2rem; border-style:dashed; color:hsl(var(--muted-foreground));">
+                            No games are live right now. Finish the current ones to advance.
+                        </div>
+                    `}
+                </div>
+
+                <h3 style="font-size:1.1rem; font-family:'Outfit',sans-serif; margin-bottom:1rem;">Today's Full Schedule</h3>
+                
+                <div style="display:grid; grid-template-columns: 1fr; gap: 1rem;">
+                    <!-- Pitch 1 Collapsible -->
+                    <div>
+                        <div class="collapsible-trigger" onclick="const c=this.nextElementSibling; c.classList.toggle('hidden'); this.querySelector('.arrow').innerHTML = c.classList.contains('hidden') ? '&darr;' : '&uarr;';">
+                            <div style="display:flex; align-items:center; gap:10px;">
+                                <div style="width:8px; height:8px; border-radius:50%; background:hsl(var(--primary));"></div>
+                                <h4 style="margin:0; font-size:0.9rem; font-weight:700; letter-spacing:1px;">PITCH 1</h4>
+                            </div>
+                            <span class="arrow" style="font-size:1.2rem;">&darr;</span>
+                        </div>
+                        <div class="collapsible-content card" style="padding:0; margin-top:4px; border-top:none; border-radius:0 0 var(--radius) var(--radius);">
+                            ${renderMiniList(pitch1)}
                         </div>
                     </div>
 
-                    <div class="card card-gradient">
-                        <div class="section-title">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="hsl(var(--sport-gold))" stroke-width="2"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>
-                            Recent Results
+                    <!-- Pitch 2 Collapsible -->
+                    <div>
+                        <div class="collapsible-trigger" onclick="const c=this.nextElementSibling; c.classList.toggle('hidden'); this.querySelector('.arrow').innerHTML = c.classList.contains('hidden') ? '&darr;' : '&uarr;';">
+                            <div style="display:flex; align-items:center; gap:10px;">
+                                <div style="width:8px; height:8px; border-radius:50%; background:hsl(var(--sport-gold));"></div>
+                                <h4 style="margin:0; font-size:0.9rem; font-weight:700; letter-spacing:1px;">PITCH 2</h4>
+                            </div>
+                            <span class="arrow" style="font-size:1.2rem;">&darr;</span>
                         </div>
-                        ${finished.length ? finished.map(m => `
-                            <a href="#/match/${m.id}" style="display:block; padding: 12px 0; border-bottom: 1px solid hsl(var(--border));">
-                                <div style="display:flex; justify-content:space-between; margin-bottom: 4px; font-size:0.8rem; color:hsl(var(--muted-foreground))">
-                                    <span>${m.pitch}</span>
-                                    <span style="color:hsl(var(--accent))">FT${m.stage && m.stage !== 'pool' ? ' (' + m.stage.toUpperCase() + ')' : ''}</span>
-                                </div>
-                                <div style="display:flex; justify-content:space-between; align-items:center; font-weight:600; font-size:0.9rem;">
-                                    <span>${m.teamA?.name || 'TBA'}</span>
-                                    <span style="color:hsl(var(--primary))">${m.scoreA} - ${m.scoreB}</span>
-                                    <span>${m.teamB?.name || 'TBA'}</span>
-                                </div>
-                            </a>
-                        `).join('') : '<div style="color:hsl(var(--muted-foreground));font-size:0.9rem;padding:12px 0;">No results yet</div>'}
+                        <div class="collapsible-content card" style="padding:0; margin-top:4px; border-top:none; border-radius:0 0 var(--radius) var(--radius);">
+                            ${renderMiniList(pitch2)}
+                        </div>
                     </div>
                 </div>
             </div>`;
@@ -153,7 +225,7 @@ const views = {
                     </div>
                     ${views.categoryDropdown()}
                 </div>
-                <div class="grid-cards" style="grid-template-columns: 1fr;"> <!-- Full width for Premier League tables -->
+                <div class="grid-cards" style="grid-template-columns: 1fr;">
         `;
 
         if (!pools.length) {
@@ -164,7 +236,7 @@ const views = {
             const { data: std } = await api.getStandings(pool.id);
             const categoryName = pool.category_id === 'cat-m' ? 'Mens' : 'Ladies';
             html += `
-                <div class="card card-gradient" style="padding:0; overflow-x:hidden;">
+                <div class="card card-gradient" style="padding:0; overflow-x:hidden; margin-bottom:1.5rem">
                     <div style="padding:1rem 1rem 0.5rem 1rem">
                         <h3 style="font-size:1.1rem; font-weight:600; font-family:'Space Grotesk',sans-serif">Pool ${(pool.name || 'Unnamed').toUpperCase()} <span style="color:hsl(var(--muted-foreground));font-weight:400;font-size:0.9rem;">(${categoryName})</span></h3>
                     </div>
@@ -266,15 +338,26 @@ const views = {
 
         const renderList = (list) => list.length ? `<div class="grid-cards">` + list.map(m => `
             <a href="#/match/${m.id}" class="card card-gradient" style="display:block">
-                <div style="display:flex; justify-content:space-between; margin-bottom: 12px;">
-                    <span style="font-size:0.8rem; padding: 2px 8px; border-radius:12px; background: ${m.status === 'finished' ? 'hsl(var(--accent)/0.2)' : 'hsl(var(--primary)/0.2)'}; color:${m.status === 'finished' ? 'hsl(var(--accent))' : 'hsl(var(--primary))'}">${m.status.toUpperCase()}</span>
-                    <span style="font-size:0.8rem; color:hsl(var(--muted-foreground))">${m.pitch} ${m.stage && m.stage !== 'pool' ? ' • ' + m.stage.toUpperCase() : ''}</span>
+                <div style="display:flex; justify-content:space-between; margin-bottom: 12px; align-items:center;">
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span style="font-size:0.65rem; font-weight:700; padding: 2px 8px; border-radius:12px; background: ${m.status === 'finished' ? 'hsl(var(--accent)/0.1)' : m.status === 'live' ? 'hsl(var(--destructive)/0.1)' : 'hsl(var(--primary)/0.1)'}; color:${m.status === 'finished' ? 'hsl(var(--accent))' : m.status === 'live' ? 'hsl(var(--destructive))' : 'hsl(var(--primary))'}">${m.status.toUpperCase()}</span>
+                        ${m.status === 'live' ? `<div class="live-dot" style="background:hsl(var(--destructive))"></div>` : ''}
+                    </div>
+                    <span style="font-size:0.75rem; color:hsl(var(--muted-foreground)); font-weight:600;">${m.pitch} ${m.stage && m.stage !== 'pool' ? ' • ' + m.stage.toUpperCase() : ''}</span>
                 </div>
                 <div style="display:flex; justify-content:space-between; align-items:center; font-weight:600; position:relative;">
-                    <span style="width:40%; text-align:left;">${m.teamA?.name || 'TBA'}</span>
-                    <span style="font-size:1.25rem; color:${m.status === 'finished' ? 'hsl(var(--primary))' : 'hsl(var(--muted-foreground))'}">${m.status === 'finished' ? m.scoreA + ' - ' + m.scoreB : 'vs'}</span>
-                    <span style="width:40%; text-align:right;">${m.teamB?.name || 'TBA'}</span>
-                    ${auth.role === 'admin' ? `<button onclick="event.preventDefault(); app.openEditMatchModal('${m.id}')" style="position:absolute; right:-10px; top:-30px; background:transparent; border:none; color:hsl(var(--muted-foreground)); cursor:pointer;" title="Edit"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg></button>` : ''}
+                    <span style="width:35%; text-align:left; font-size:0.9rem;">${m.teamA?.name || 'TBA'}</span>
+                    <div style="display:flex; flex-direction:column; align-items:center;">
+                        <span style="font-size:1.25rem; color:${(m.status === 'finished' || m.status === 'live') ? 'hsl(var(--primary))' : 'hsl(var(--muted-foreground))'}">${(m.status === 'finished' || m.status === 'live') ? m.scoreA + ' - ' + m.scoreB : 'vs'}</span>
+                        <span style="font-size:0.7rem; color:hsl(var(--muted-foreground)); font-weight:400;">${m.status === 'live' ? 'LIVE' : views.formatTime(m.time)}</span>
+                    </div>
+                    <span style="width:35%; text-align:right; font-size:0.9rem;">${m.teamB?.name || 'TBA'}</span>
+                    ${auth.role === 'admin' ? `
+                        <div style="position:absolute; right:-10px; top:-40px; display:flex; gap:8px;">
+                            ${m.status === 'upcoming' ? `<button class="pill-badge" style="background:hsl(var(--primary)/0.1); color:hsl(var(--primary)); padding:2px 8px; font-size:0.65rem;" onclick="event.preventDefault(); app.startMatch('${m.id}')">START</button>` : ''}
+                            <button onclick="event.preventDefault(); app.openEditMatchModal('${m.id}')" style="background:transparent; border:none; color:hsl(var(--muted-foreground)); cursor:pointer;" title="Edit"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg></button>
+                        </div>
+                    ` : ''}
                 </div>
             </a>
         `).join('') + `</div>` : views.emptyState('No fixtures', '');
@@ -325,14 +408,8 @@ const views = {
             </div>`;
     },
 
-    // ─── CONTROL PANEL (Staff/Admin) ───
+    // ─── CONTROL PANEL ───
     control: async () => {
-        const catId = 'all'; // Admin usually needs full visibility
-        const { data: pools } = await api.getPools(catId);
-        const { data: teams } = await api.getTeams(catId);
-        const { data: matches } = await api.getMatches(catId);
-        const { data: cats } = await api.getCategories();
-
         return `
             <div class="view-enter">
                 <div style="max-width: 600px; margin: 0 auto;">
@@ -354,7 +431,7 @@ const views = {
                         </div>
 
                         <div id="control-port">
-                            ${views.controlTeamForm(pools)}
+                            Loading...
                         </div>
                     </div>
                 </div>
@@ -362,11 +439,8 @@ const views = {
     },
 
     setTab: async function (btn, tab) {
-        document.querySelectorAll('#control-port').forEach(() => {
-            const container = btn.parentElement;
-            container.querySelectorAll('.pill-badge').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-        });
+        document.querySelectorAll('.pill-badge').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
         const port = document.getElementById('control-port');
         const catId = 'all';
         const { data: teams } = await api.getTeams(catId);
@@ -379,7 +453,7 @@ const views = {
         else if (tab === 'pools') port.innerHTML = views.controlPoolForm(cats);
         else if (tab === 'players') port.innerHTML = views.controlPlayerForm(teams);
         else if (tab === 'schedule') port.innerHTML = views.controlScheduleForm(teams);
-        else if (tab === 'finalize') port.innerHTML = views.controlFinalizeForm(matches.filter(m => m.status === 'upcoming'));
+        else if (tab === 'finalize') port.innerHTML = views.controlFinalizeForm(matches.filter(m => m.status !== 'finished'));
         else if (tab === 'stats' && auth.role === 'admin') port.innerHTML = views.controlStatsForm(teams);
         else if (tab === 'users' && auth.role === 'admin') port.innerHTML = views.controlUsersForm(users);
     },
@@ -410,17 +484,6 @@ const views = {
             </select>
             <button class="btn-full" onclick="app.submitTeam()">Register Team</button>
         </div>
-        <script>
-            views.filterPoolsByCategory = function(catId) {
-                const poolSelect = document.getElementById('new-team-pool');
-                if(!poolSelect) return;
-                Array.from(poolSelect.options).forEach(opt => {
-                    opt.style.display = opt.className.includes(catId) ? 'block' : 'none';
-                });
-                poolSelect.value = Array.from(poolSelect.options).find(o => o.style.display !== 'none')?.value || '';
-            };
-            views.filterPoolsByCategory('cat-m'); // init
-        </script>
         `,
 
     controlPlayerForm: (teams) => `
@@ -448,8 +511,8 @@ const views = {
                 ${teams.map(t => `<option value="${t.id}">${t.name} (Away)</option>`).join('')}
             </select>
             <select class="form-input" id="m-pitch">
-                <option value="Pitch A">Pitch A</option>
-                <option value="Pitch B">Pitch B</option>
+                <option value="Pitch 1">Pitch 1</option>
+                <option value="Pitch 2">Pitch 2</option>
             </select>
             <div style="display:flex; gap:8px;">
                 <input class="form-input" type="time" id="m-time" title="Start Time" required>
@@ -471,7 +534,6 @@ const views = {
                 <input class="form-input" type="number" id="s-gf" placeholder="Goals For (GF)">
                 <input class="form-input" type="number" id="s-ga" placeholder="Goals Ag (GA)">
             </div>
-            <p style="font-size:0.8rem; color:hsl(var(--muted-foreground)); margin-bottom:8px;">These stats offset the dynamic tally.</p>
             <button class="btn-full" style="background:hsl(var(--primary)); color:#000" onclick="app.submitTeamStats()">Update Team Stats Override</button>
         </div>`,
 
@@ -485,7 +547,7 @@ const views = {
                             <span>${u.email}</span>
                             <div style="display:flex; gap:8px; align-items:center;">
                                 <span style="color:hsl(var(--primary))">${u.role}</span>
-                                <button onclick="app.openEditUserModal('${u.email}')" style="background:none; border:none; cursor:pointer; color:hsl(var(--accent)); padding:0;" title="Edit"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg></button>
+                                <button onclick="app.openEditUserModal('${u.email}')" style="background:none; border:none; color:hsl(var(--accent)); cursor:pointer; padding:0;" title="Edit"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg></button>
                             </div>
                         </div>
                     `).join('')}
@@ -495,25 +557,42 @@ const views = {
             <input class="form-input" type="text" id="u-email" placeholder="Email / Username (e.g. jdoe@ku.knt)">
             <input class="form-input" type="password" id="u-pass" placeholder="Password">
             <select class="form-input" id="u-role">
-                <option value="staff">Staff (Limited Management)</option>
-                <option value="admin">Admin (Full Control)</option>
+                <option value="staff">Staff</option>
+                <option value="admin">Admin</option>
             </select>
             <button class="btn-full" style="background:hsl(var(--accent)); color:#fff" onclick="app.submitUser()">Register User</button>
         </div>`,
 
-    controlFinalizeForm: (upcomingMatches) => `
+    controlFinalizeForm: (matches) => `
         <div>
-            ${upcomingMatches.length ? `
+            ${matches.length ? `
                 <select class="form-input" id="m-fin-idx">
-                    ${upcomingMatches.map(m => `<option value="${m.id}">${m.teamA?.name || 'A'} vs ${m.teamB?.name || 'B'} (${(m.stage || 'pool').toUpperCase()})</option>`).join('')}
+                    ${matches.map(m => `<option value="${m.id}">${m.teamA?.name || 'A'} vs ${m.teamB?.name || 'B'} (${(m.stage || 'pool').toUpperCase()})</option>`).join('')}
                 </select>
                 <div style="display:flex;gap:12px">
                     <input class="form-input" type="number" id="m-fin-a" placeholder="Home score">
                     <input class="form-input" type="number" id="m-fin-b" placeholder="Away score">
                 </div>
-                <button class="btn-full" style="background:hsl(var(--sport-gold)); color:#000" onclick="app.submitFinalResult()">Submit Final Result</button>
-            ` : `<div style="text-align:center;color:hsl(var(--muted-foreground));padding:20px;font-size:0.9rem">No upcoming fixtures to finalize</div>`}
+                <button class="btn-full" style="background:hsl(var(--sport-gold)); color:#000" onclick="app.submitFinalResult()">Submit Result / Update Status</button>
+            ` : `<div style="text-align:center;color:hsl(var(--muted-foreground));padding:20px;font-size:0.9rem">No matches to manage</div>`}
         </div>`,
+
+    filterPoolsByCategory: (catId) => {
+        const poolSelect = document.getElementById('new-team-pool');
+        if (!poolSelect) return;
+        const options = poolSelect.querySelectorAll('option');
+        options.forEach(opt => {
+            if (opt.classList.contains(`opt-${catId}`)) {
+                opt.style.display = 'block';
+            } else {
+                opt.style.display = 'none';
+                if (poolSelect.value === opt.value) poolSelect.selectedIndex = -1;
+            }
+        });
+        // Select the first visible option
+        const firstVisible = Array.from(options).find(o => o.style.display === 'block');
+        if (firstVisible) poolSelect.value = firstVisible.value;
+    },
 
     // ─── TEAM DETAIL ───
     teamStats: async (teamId) => {
@@ -522,20 +601,60 @@ const views = {
         const { data: players } = await api.getPlayers(teamId);
         if (!team) return `<div>Team not found</div>`;
 
+        const isOwner = (auth.role === 'team' && auth.teamId === teamId) || auth.role === 'admin' || auth.role === 'staff';
+
+        const backPath = auth.role === 'team' ? '#/' : '#/stats';
+
         return `
             <div class="view-enter">
-                <a href="javascript:history.back()" style="display:inline-block; margin-bottom:1rem; color:hsl(var(--muted-foreground)); font-size:0.9rem">&larr; Back to Teams</a>
-                <div class="card card-gradient" style="margin-bottom:1.5rem">
-                    <h2 style="font-size:1.5rem; font-weight:700">${team.name.toUpperCase()}</h2>
-                    <div style="color:hsl(var(--muted-foreground))">Roster</div>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+                    <a href="${backPath}" style="color:hsl(var(--muted-foreground)); font-size:0.85rem; text-decoration:none; display:flex; align-items:center; gap:4px;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg> Back
+                    </a>
                 </div>
-                <div class="grid-cards">
+
+                <div class="card card-gradient" style="margin-bottom:1.5rem; text-align:center; padding: 2.5rem 1rem;">
+                    <div style="width:100px; height:100px; border-radius:50%; background:#fff; margin: 0 auto 1.5rem; display:flex; align-items:center; justify-content:center; border:3px solid hsl(var(--primary)); box-shadow: 0 0 20px hsla(var(--primary), 0.2);">
+                         <img src="${team.logo}" style="width:80px; height:80px; object-fit:contain;">
+                    </div>
+                    <h2 style="font-size:1.8rem; font-weight:800; font-family:'Outfit',sans-serif; margin:0; letter-spacing:-0.5px;">${team.name.toUpperCase()}</h2>
+                    <div style="color:hsl(var(--muted-foreground)); font-size:0.95rem; font-weight:500; margin-top:6px;">Official Tournament Roster</div>
+                </div>
+
+                ${isOwner ? `
+                    <div class="card" style="margin-bottom:1.5rem; padding:1.25rem; border:1px dashed hsl(var(--primary)/0.3); background:hsl(var(--primary)/0.02);">
+                        <h4 style="margin:0 0 1rem 0; font-size:0.85rem; font-weight:800; color:hsl(var(--primary)); text-transform:uppercase; letter-spacing:1.5px;">Register New Player</h4>
+                        <form onsubmit="event.preventDefault(); app.submitPlayerToRoster('${teamId}')" style="display:grid; grid-template-columns: 1fr 80px auto; gap:12px;">
+                            <input class="form-input" type="text" id="new-p-name" placeholder="Full Name (e.g. JOHN DOE)" required style="margin:0; height:46px; font-weight:600;">
+                            <input class="form-input" type="number" id="new-p-jersey" placeholder="#" required style="margin:0; height:46px; font-weight:800;">
+                            <button type="submit" class="btn-full" style="margin:0; height:46px; width:46px; padding:0; display:flex; align-items:center; justify-content:center; background:hsl(var(--primary)); color:#000; border-radius:12px;">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                            </button>
+                        </form>
+                    </div>
+                ` : ''}
+
+                <div style="display:grid; grid-template-columns: 1fr; gap: 10px;">
                     ${players.length ? players.map(p => `
-                        <div class="card" style="display:flex; justify-content:space-between; align-items:center; padding:12px 16px;">
-                            <span style="font-weight:600">${p.name}</span>
-                            <span style="background:hsl(var(--muted)); padding:4px 8px; border-radius:4px; font-size:0.8rem; color:hsl(var(--muted-foreground))">#${p.jersey}</span>
+                        <div class="card" style="display:flex; justify-content:space-between; align-items:center; padding:16px 20px; background:hsl(var(--card)/0.4); border:1px solid hsl(var(--border)/0.5);">
+                            <div style="display:flex; align-items:center; gap:20px;">
+                                <div style="width:40px; height:40px; border-radius:10px; background:hsl(var(--background)); display:flex; align-items:center; justify-content:center; font-weight:900; font-size:1.1rem; color:hsl(var(--primary)); border:2px solid hsl(var(--border)); font-family:'Space Grotesk',sans-serif;">
+                                    ${p.jersey}
+                                </div>
+                                <span style="font-weight:700; font-size:1rem; letter-spacing:0.5px; color:hsl(var(--foreground));">${p.name.toUpperCase()}</span>
+                            </div>
+                            ${isOwner ? `
+                                <button onclick="app.deletePlayerFromRoster('${p.id}', '${teamId}')" style="background:hsl(var(--destructive)/0.1); border:none; color:hsl(var(--destructive)); cursor:pointer; width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; transition:0.2s;" class="hover-danger">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 6h18"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                                </button>
+                            ` : ''}
                         </div>
-                    `).join('') : '<div style="color:hsl(var(--muted-foreground));">No players registered</div>'}
+                    `).join('') : `
+                        <div style="text-align:center; padding: 3rem; color:hsl(var(--muted-foreground)); font-size:0.9rem; border:2px dashed hsl(var(--border)); border-radius:var(--radius);">
+                            <svg style="margin-bottom:12px; opacity:0.3" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg>
+                            <div style="font-weight:600;">No official squad registered.</div>
+                        </div>
+                    `}
                 </div>
             </div>`;
     },
@@ -582,8 +701,6 @@ const views = {
             <div class="dd-menu hidden" style="position:absolute; top:110%; left:0; right:0; background:rgba(20,20,30,0.95); backdrop-filter:blur(10px); border:1px solid rgba(255,255,255,0.1); border-radius:10px; z-index:1000; box-shadow:0 10px 30px rgba(0,0,0,0.5); overflow:hidden;">
                 ${opts.map(o => `
                     <div style="padding:10px 16px; font-size:0.85rem; cursor:pointer; color:${o.v === current ? 'hsl(var(--primary))' : 'hsl(var(--foreground))'}; background:${o.v === current ? 'rgba(255,255,255,0.05)' : 'transparent'};"
-                         onmouseover="this.style.background='rgba(255,255,255,0.1)'"
-                         onmouseout="this.style.background='${o.v === current ? 'rgba(255,255,255,0.05)' : 'transparent'}'"
                          onclick="app.setCategory('${o.v}')">
                         ${o.l}
                     </div>
@@ -594,7 +711,7 @@ const views = {
 
     pitchDropdown: () => {
         const current = globalState.currentPitchId;
-        const opts = [{v:'all', l:'All Fields'}, {v:'Pitch A', l:'Pitch A'}, {v:'Pitch B', l:'Pitch B'}];
+        const opts = [{v:'all', l:'All Fields'}, {v:'Pitch 1', l:'Pitch 1'}, {v:'Pitch 2', l:'Pitch 2'}];
         const selected = opts.find(o => o.v === current).l;
         return `
         <div style="position:relative; width:140px; font-family:'Space Grotesk',sans-serif;" tabindex="0" onblur="setTimeout(() => this.querySelector('.dd-menu').classList.add('hidden'), 150)">
@@ -604,8 +721,6 @@ const views = {
             <div class="dd-menu hidden" style="position:absolute; top:110%; left:0; right:0; background:rgba(20,20,30,0.95); backdrop-filter:blur(10px); border:1px solid rgba(255,255,255,0.1); border-radius:10px; z-index:1000; box-shadow:0 10px 30px rgba(0,0,0,0.5); overflow:hidden;">
                 ${opts.map(o => `
                     <div style="padding:10px 16px; font-size:0.85rem; cursor:pointer; color:${o.v === current ? 'hsl(var(--primary))' : 'hsl(var(--foreground))'}; background:${o.v === current ? 'rgba(255,255,255,0.05)' : 'transparent'};"
-                         onmouseover="this.style.background='rgba(255,255,255,0.1)'"
-                         onmouseout="this.style.background='${o.v === current ? 'rgba(255,255,255,0.05)' : 'transparent'}'"
                          onclick="app.setPitch('${o.v}')">
                         ${o.l}
                     </div>
@@ -661,13 +776,13 @@ style.textContent = `
     .modern-select {
         appearance: none;
         -webkit-appearance: none;
-        background-color: rgba(255, 255, 255, 0.05); /* Premium glass background */
+        background-color: rgba(255, 255, 255, 0.05);
         backdrop-filter: blur(8px);
-        border: 1px solid rgba(255, 255, 255, 0.1); /* Subtle outline */
+        border: 1px solid rgba(255, 255, 255, 0.1);
         color: hsl(var(--foreground));
         padding: 8px 16px;
         padding-right: 40px;
-        border-radius: 10px; /* Mac style radius */
+        border-radius: 10px;
         font-size: 0.9rem;
         font-family: inherit;
         font-weight: 500;
@@ -684,18 +799,22 @@ style.textContent = `
     .modern-select:hover {
         background-color: rgba(255, 255, 255, 0.1);
         border-color: rgba(255, 255, 255, 0.2);
-        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255,255,255,0.15);
     }
     .modern-select:focus {
         outline: none;
         border-color: hsl(var(--primary));
-        box-shadow: 0 0 0 3px hsl(var(--primary) / 0.3), inset 0 1px 0 rgba(255,255,255,0.1);
-        background-color: rgba(0, 0, 0, 0.8);
     }
-    .modern-select option {
-        background-color: hsl(var(--card));
-        color: hsl(var(--card-foreground));
-        padding: 8px;
+    .dd-menu.hidden { display: none; }
+    @keyframes pulse-dot {
+        0% { transform: scale(0.95); opacity: 0.8; }
+        50% { transform: scale(1.05); opacity: 1; }
+        100% { transform: scale(0.95); opacity: 0.8; }
+    }
+    .live-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        animation: pulse-dot 1s infinite;
     }
 `;
 document.head.appendChild(style);

@@ -10,18 +10,32 @@ const auth = {
             const data = JSON.parse(saved);
             auth.user = data.user;
             auth.role = data.role;
+            if (auth.user?.teamId) auth.teamId = auth.user.teamId;
         }
+        auth.updateUI();
+    },
+    persist: () => {
+        localStorage.setItem('KU_AUTH', JSON.stringify({ user: auth.user, role: auth.role }));
         auth.updateUI();
     },
 
     login: async (email, pass) => {
-        const staff = MOCK_DATA.users.find(u => u.email === email && u.password === pass);
+        const staff = (MOCK_DATA.users || []).find(u => u.email === email && u.password === pass);
         if (staff) {
             auth.user = { email: staff.email };
             auth.role = staff.role;
-            localStorage.setItem('KU_AUTH', JSON.stringify({ user: auth.user, role: auth.role }));
-            auth.updateUI();
-            return true;
+            auth.persist();
+            return { role: auth.role };
+        }
+        
+        // Team Login Logic
+        const team = (MOCK_DATA.teams || []).find(t => t.name.toLowerCase() === email.toLowerCase() && pass === '12345678');
+        if (team) {
+            auth.user = { email: team.name, teamId: team.id };
+            auth.role = 'team';
+            auth.teamId = team.id;
+            auth.persist();
+            return { role: 'team', teamId: team.id };
         }
         return false;
     },
@@ -40,15 +54,24 @@ const auth = {
 
         if (auth.role !== 'viewer') {
             if(status) {
+                let extraNav = '';
+                if (auth.role === 'team') {
+                    extraNav = `<a href="#/team/${auth.teamId}" class="pill-badge active" style="margin-right:12px; font-size:0.75rem; text-decoration:none;">MY ROSTER</a>`;
+                }
                 status.innerHTML = `
                 <div style="display:flex;align-items:center;gap:12px">
+                    ${extraNav}
                     <span style="font-size:0.8rem; background:hsl(var(--accent)/0.2); color:hsl(var(--accent)); padding:4px 8px; border-radius:12px; font-weight:600">${auth.role.toUpperCase()}</span>
                     <button onclick="auth.logout()" style="color:hsl(var(--destructive)); display:flex; align-items:center; gap:4px; font-weight:600; font-size:0.85rem;" title="Logout">
                         Logout <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
                     </button>
                 </div>`;
             }
-            controlNavs.forEach(nav => nav.classList.remove('hidden'));
+            if (auth.role === 'admin' || auth.role === 'staff') {
+                controlNavs.forEach(nav => nav.classList.remove('hidden'));
+            } else {
+                controlNavs.forEach(nav => nav.classList.add('hidden'));
+            }
         } else {
             if(status) {
                 status.innerHTML = `
