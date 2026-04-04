@@ -72,8 +72,8 @@ const MOCK_DATA = {
     ].map(t => ({ ...t, logo: `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(t.name)}`, manual_stats: {p:0, w:0, d:0, l:0, gf:0, ga:0} })),
     players: JSON.parse(localStorage.getItem('KU_PLAYERS')) || [],
     matches: JSON.parse(localStorage.getItem('KU_MATCHES')) || [
-        // PITCH 1
-        { id: 'm1', teamA_id: 'tm-b2', teamB_id: 'tm-b4', scoreA: 0, scoreB: 0, status: 'live', pitch: 'Pitch 1', time: '2026-04-04T06:00:00Z', category_id: 'cat-m', stage: 'pool', current_quarter: 'Q1' },
+        // PITCH 1 - FULL SCHED
+        { id: 'm1', teamA_id: 'tm-b2', teamB_id: 'tm-b4', scoreA: 0, scoreB: 0, status: 'live', pitch: 'Pitch 1', time: '2026-04-04T06:00:00Z', category_id: 'cat-m', stage: 'pool', current_quarter: 'Q2' },
         { id: 'm2', teamA_id: 'tm-a1', teamB_id: 'tm-a3', scoreA: 0, scoreB: 0, status: 'upcoming', pitch: 'Pitch 1', time: '2026-04-04T06:15:00Z', category_id: 'cat-m', stage: 'pool', current_quarter: 'Not Started' },
         { id: 'm3', teamA_id: 'tw-a1', teamB_id: 'tw-a2', scoreA: 0, scoreB: 0, status: 'upcoming', pitch: 'Pitch 1', time: '2026-04-04T06:30:00Z', category_id: 'cat-w', stage: 'pool', current_quarter: 'Not Started' },
         { id: 'm4', teamA_id: 'tm-b2', teamB_id: 'tm-b3', scoreA: 0, scoreB: 0, status: 'upcoming', pitch: 'Pitch 1', time: '2026-04-04T06:45:00Z', category_id: 'cat-m', stage: 'pool', current_quarter: 'Not Started' },
@@ -82,19 +82,24 @@ const MOCK_DATA = {
         { id: 'm7', teamA_id: 'tm-b1', teamB_id: 'tm-b4', scoreA: 0, scoreB: 0, status: 'upcoming', pitch: 'Pitch 1', time: '2026-04-04T07:30:00Z', category_id: 'cat-m', stage: 'pool', current_quarter: 'Not Started' },
         { id: 'm8', teamA_id: 'tm-a1', teamB_id: 'tm-a4', scoreA: 0, scoreB: 0, status: 'upcoming', pitch: 'Pitch 1', time: '2026-04-04T07:45:00Z', category_id: 'cat-m', stage: 'pool', current_quarter: 'Not Started' },
         
-        // PITCH 2
-        { id: 'm101', teamA_id: 'tm-d1', teamB_id: 'tm-d2', scoreA: 0, scoreB: 0, status: 'live', pitch: 'Pitch 2', time: '2026-04-04T06:00:00Z', category_id: 'cat-m', stage: 'pool', current_quarter: 'Q2' },
+        // PITCH 2 - FULL SCHED
+        { id: 'm101', teamA_id: 'tm-d1', teamB_id: 'tm-d2', scoreA: 0, scoreB: 0, status: 'live', pitch: 'Pitch 2', time: '2026-04-04T06:00:00Z', category_id: 'cat-m', stage: 'pool', current_quarter: 'Q3' },
         { id: 'm102', teamA_id: 'tm-e1', teamB_id: 'tm-e2', scoreA: 0, scoreB: 0, status: 'upcoming', pitch: 'Pitch 2', time: '2026-04-04T06:15:00Z', category_id: 'cat-m', stage: 'pool', current_quarter: 'Not Started' },
         { id: 'm103', teamA_id: 'tw-c1', teamB_id: 'tw-c2', scoreA: 0, scoreB: 0, status: 'upcoming', pitch: 'Pitch 2', time: '2026-04-04T06:30:00Z', category_id: 'cat-w', stage: 'pool', current_quarter: 'Not Started' },
         { id: 'm104', teamA_id: 'tm-g1', teamB_id: 'tm-g2', scoreA: 0, scoreB: 0, status: 'upcoming', pitch: 'Pitch 2', time: '2026-04-04T06:45:00Z', category_id: 'cat-m', stage: 'pool', current_quarter: 'Not Started' },
         { id: 'm105', teamA_id: 'tm-d2', teamB_id: 'tm-d3', scoreA: 0, scoreB: 0, status: 'upcoming', pitch: 'Pitch 2', time: '2026-04-04T07:00:00Z', category_id: 'cat-m', stage: 'pool', current_quarter: 'Not Started' },
-        { id: 'm106', teamA_id: 'tm-e1', teamB_id: 'tm-e3', scoreA: 0, scoreB: 0, status: 'upcoming', pitch: 'Pitch 2', time: '2026-04-04T07:15:00Z', category_id: 'cat-m', stage: 'pool', current_quarter: 'Not Started' },
+        { id: 'm106', teamA_id: 'tw-c1', teamB_id: 'tw-c4', scoreA: 0, scoreB: 0, status: 'upcoming', pitch: 'Pitch 2', time: '2026-04-04T07:15:00Z', category_id: 'cat-w', stage: 'pool', current_quarter: 'Not Started' },
+        { id: 'm107', teamA_id: 'tm-f3', teamB_id: 'tm-f4', scoreA: 0, scoreB: 0, status: 'upcoming', pitch: 'Pitch 2', time: '2026-04-04T07:30:00Z', category_id: 'cat-m', stage: 'pool', current_quarter: 'Not Started' },
+        { id: 'm108', teamA_id: 'tm-d3', teamB_id: 'tm-d4', scoreA: 0, scoreB: 0, status: 'upcoming', pitch: 'Pitch 2', time: '2026-04-04T07:45:00Z', category_id: 'cat-m', stage: 'pool', current_quarter: 'Not Started' },
+        { id: 'm109', teamA_id: 'tw-c2', teamB_id: 'tw-c3', scoreA: 0, scoreB: 0, status: 'upcoming', pitch: 'Pitch 2', time: '2026-04-04T08:00:00Z', category_id: 'cat-w', stage: 'pool', current_quarter: 'Not Started' },
+        { id: 'm110', teamA_id: 'tm-d1', teamB_id: 'tm-d3', scoreA: 0, scoreB: 0, status: 'upcoming', pitch: 'Pitch 2', time: '2026-04-04T08:15:00Z', category_id: 'cat-m', stage: 'pool', current_quarter: 'Not Started' },
+        { id: 'm111', teamA_id: 'tm-e1', teamB_id: 'tm-e3', scoreA: 0, scoreB: 0, status: 'upcoming', pitch: 'Pitch 2', time: '2026-04-04T08:30:00Z', category_id: 'cat-m', stage: 'pool', current_quarter: 'Not Started' },
+        { id: 'm112', teamA_id: 'tw-c3', teamB_id: 'tw-c4', scoreA: 0, scoreB: 0, status: 'upcoming', pitch: 'Pitch 2', time: '2026-04-04T08:45:00Z', category_id: 'cat-w', stage: 'pool', current_quarter: 'Not Started' },
+        { id: 'm113', teamA_id: 'tm-e1', teamB_id: 'tm-e4', scoreA: 0, scoreB: 0, status: 'upcoming', pitch: 'Pitch 2', time: '2026-04-04T09:00:00Z', category_id: 'cat-m', stage: 'pool', current_quarter: 'Not Started' },
 
-
-        
         // KNOCKOUTS
-        { id: 'mk-r16-1', teamA_id: null, teamB_id: null, scoreA: 0, scoreB: 0, status: 'upcoming', pitch: 'Pitch 1', time: '2026-04-04T11:00:00Z', category_id: 'cat-m', stage: 'r16', placeholderA: 'Pool A Winner', placeholderB: 'Pool G Runner Up' },
-        { id: 'mk-qf-1', teamA_id: null, teamB_id: null, scoreA: 0, scoreB: 0, status: 'upcoming', pitch: 'Pitch 1', time: '2026-04-04T12:30:00Z', category_id: 'cat-w', stage: 'qf', placeholderA: 'Ladies QF 1' }
+        { id: 'mk-r16-1', teamA_id: null, teamB_id: null, scoreA: 0, scoreB: 0, status: 'upcoming', pitch: 'Pitch 1', time: '2026-04-04T11:00:00Z', category_id: 'cat-m', stage: 'r16', placeholderA: 'Winner A', placeholderB: 'Runner Up G' },
+        { id: 'mk-qf-1', teamA_id: null, teamB_id: null, scoreA: 0, scoreB: 0, status: 'upcoming', pitch: 'Pitch 1', time: '2026-04-04T12:30:00Z', category_id: 'cat-w', stage: 'qf', placeholderA: 'Winner A', placeholderB: 'Runner Up C' }
     ],
     events: JSON.parse(localStorage.getItem('KU_EVENTS')) || [],
     users: JSON.parse(localStorage.getItem('KU_USERS')) || [
