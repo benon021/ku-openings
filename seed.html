@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>KU Open Seeding Tool</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <h1>Seeding Supabase...</h1>
+    <div id="status">Starting... Check Console (F12)</div>
+    <script src="js/api.js"></script>
+    <script>
+        async function runSeed() {
+            try {
+                const status = document.getElementById('status');
+                status.innerText = "Syncing Categories, Pools, Teams, and Matches to Supabase...";
+                await api.seedDatabase();
+                status.innerText = "CLoud Migration COMPLETE! Your teams are now live on Vercel.";
+                status.style.color = "green";
+            } catch (err) {
+                document.getElementById('status').innerText = "Error: " + err.message;
+                document.getElementById('status').style.color = "red";
+                console.error(err);
+            }
+        }
+        runSeed();
+    </script>
+</body>
+</html>
