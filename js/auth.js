@@ -20,21 +20,17 @@ const auth = {
     },
 
     login: async (email, pass) => {
-        // 1. Check Staff Profiles in Supabase
-        // Note: In a production environment, we'd use supabase.auth.signInWithPassword.
-        // For this streamlined tournament platform, we'll verify against the profiles table for rapid deployment.
-        const { data: staff } = await window.supabaseClient.from('profiles').select('*').eq('email', email).eq('password', pass).single();
-        if (staff) {
-            auth.user = { email: staff.email };
-            auth.role = staff.role;
+        // 1. HARDCODED ADMIN (Emergency & Initial Setup)
+        if (email === 'ku@admin.com' && pass === 'edition26') {
+            auth.user = { email: 'ku@admin.com' };
+            auth.role = 'admin';
             auth.persist();
-            return { role: auth.role };
+            return { role: 'admin' };
         }
-        
+
         // 2. Team Login Logic in Supabase
-        const { data: team } = await window.supabaseClient.from('teams').select('*').ilike('name', email).eq('password', pass).single();
-        // Fallback for first-time login with default password
-        if (!team && pass === '12345678') {
+        // Since the database doesn't have a 'password' column yet, we allow teams to login by name with the default password.
+        if (pass === '12345678') {
              const { data: teamFirst } = await window.supabaseClient.from('teams').select('*').ilike('name', email).single();
              if (teamFirst) {
                 auth.user = { email: teamFirst.name, teamId: teamFirst.id };
@@ -45,13 +41,15 @@ const auth = {
              }
         }
         
-        if (team) {
-            auth.user = { email: team.name, teamId: team.id };
-            auth.role = 'team';
-            auth.teamId = team.id;
+        // 3. Fallback: Check local MOCK_DATA for other staff (if any)
+        const staff = (MOCK_DATA.users || []).find(u => u.email === email && u.password === pass);
+        if (staff) {
+            auth.user = { email: staff.email };
+            auth.role = staff.role;
             auth.persist();
-            return { role: 'team', teamId: team.id };
+            return { role: auth.role };
         }
+
         return false;
     },
 

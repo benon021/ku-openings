@@ -173,7 +173,7 @@ const api = {
         return await q;
     },
     getMatches: async (catId, pitchId = 'all') => {
-        let q = window.supabaseClient.from('matches').select('*, teamA:teams!matches_teamA_id_fkey(*), teamB:teams!matches_teamB_id_fkey(*)');
+        let q = window.supabaseClient.from('matches').select('*, teamA:teams!teamA_id(*), teamB:teams!teamB_id(*)');
         if (catId && catId !== 'all') q = q.eq('category_id', catId);
         if (pitchId && pitchId !== 'all') q = q.eq('pitch', pitchId);
         const { data, error } = await q.order('time');
