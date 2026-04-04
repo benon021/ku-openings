@@ -428,6 +428,7 @@ const views = {
                             <button class="pill-badge" onclick="views.setTab(this,'finalize')">Scores</button>
                             ${auth.role === 'admin' ? `<button class="pill-badge" onclick="views.setTab(this,'stats')">Stats</button>` : ''}
                             ${auth.role === 'admin' ? `<button class="pill-badge" onclick="views.setTab(this,'users')">Users</button>` : ''}
+                            ${auth.role === 'admin' ? `<button class="pill-badge" style="background:hsl(var(--accent)/0.1); border-color:hsl(var(--accent)); color:hsl(var(--accent))" onclick="api.seedDatabase()">Sync Cloud</button>` : ''}
                         </div>
 
                         <div id="control-port">

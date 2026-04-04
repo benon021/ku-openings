@@ -20,7 +20,10 @@ const auth = {
     },
 
     login: async (email, pass) => {
-        const staff = (MOCK_DATA.users || []).find(u => u.email === email && u.password === pass);
+        // 1. Check Staff Profiles in Supabase
+        // Note: In a production environment, we'd use supabase.auth.signInWithPassword.
+        // For this streamlined tournament platform, we'll verify against the profiles table for rapid deployment.
+        const { data: staff } = await window.supabaseClient.from('profiles').select('*').eq('email', email).eq('password', pass).single();
         if (staff) {
             auth.user = { email: staff.email };
             auth.role = staff.role;
@@ -28,8 +31,20 @@ const auth = {
             return { role: auth.role };
         }
         
-        // Team Login Logic
-        const team = (MOCK_DATA.teams || []).find(t => t.name.toLowerCase() === email.toLowerCase() && pass === '12345678');
+        // 2. Team Login Logic in Supabase
+        const { data: team } = await window.supabaseClient.from('teams').select('*').ilike('name', email).eq('password', pass).single();
+        // Fallback for first-time login with default password
+        if (!team && pass === '12345678') {
+             const { data: teamFirst } = await window.supabaseClient.from('teams').select('*').ilike('name', email).single();
+             if (teamFirst) {
+                auth.user = { email: teamFirst.name, teamId: teamFirst.id };
+                auth.role = 'team';
+                auth.teamId = teamFirst.id;
+                auth.persist();
+                return { role: 'team', teamId: teamFirst.id };
+             }
+        }
+        
         if (team) {
             auth.user = { email: team.name, teamId: team.id };
             auth.role = 'team';
