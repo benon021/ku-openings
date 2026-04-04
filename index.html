@@ -285,6 +285,69 @@
             width: 100%;
             max-width: 400px;
             position: relative;
+            transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+
+        .modal-content.map-fullscreen {
+            max-width: 100%;
+            width: 100%;
+            height: 100%;
+            border-radius: 0;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .modal-content.map-fullscreen #directions-map {
+            flex: 1;
+            aspect-ratio: unset;
+        }
+
+        /* Autocomplete dropdown */
+        .places-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: rgba(20, 20, 30, 0.97);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 0 0 10px 10px;
+            z-index: 200;
+            max-height: 200px;
+            overflow-y: auto;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        .places-dropdown-item {
+            padding: 10px 14px;
+            font-size: 0.82rem;
+            color: hsl(var(--foreground));
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: background 0.15s;
+        }
+        .places-dropdown-item:hover {
+            background: rgba(255,255,255,0.08);
+        }
+        .places-dropdown-item svg {
+            flex-shrink: 0;
+            color: hsl(var(--muted-foreground));
+        }
+        .places-dropdown-item span {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.4; transform: scale(1.4); }
+        }
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
         }
 
         .modal-close {

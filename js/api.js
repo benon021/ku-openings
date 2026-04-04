@@ -38,8 +38,7 @@ const MOCK_DATA = {
         { match_id: 'm1', type: 'goal', player_name: 'Michael Jordan', team_id: 't1', minute: 15 }
     ],
     users: JSON.parse(localStorage.getItem('KU_USERS')) || [
-        { email: 'staff@ku.knt', password: '123', role: 'staff' },
-        { email: 'admin@ku.knt', password: 'admin', role: 'admin' }
+        { email: 'ku@admin.com', password: 'edition26', role: 'admin' }
     ]
 };
 

@@ -16,10 +16,9 @@ const auth = {
 
     login: async (email, pass) => {
         const staff = MOCK_DATA.users.find(u => u.email === email && u.password === pass);
-        // Special bypass check for screenshot script input:
-        if (staff || email === 'greensharks') {
-            auth.user = { email: staff ? staff.email : email };
-            auth.role = staff ? staff.role : 'team';
+        if (staff) {
+            auth.user = { email: staff.email };
+            auth.role = staff.role;
             localStorage.setItem('KU_AUTH', JSON.stringify({ user: auth.user, role: auth.role }));
             auth.updateUI();
             return true;

@@ -617,18 +617,13 @@ const views = {
     loginForm: () => `
         <div style="text-align:center; margin-bottom:24px">
             <svg style="margin:0 auto 12px; color:hsl(var(--primary))" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
-            <h2 style="font-family:'Outfit',sans-serif; font-size:1.5rem; font-weight:700;">Login</h2>
-            <p style="color:hsl(var(--muted-foreground)); font-size:0.9rem">Access admin or team features</p>
-        </div>
-        
-        <div style="display:flex; gap:8px; margin-bottom:1.5rem">
-            <button style="flex:1; background:hsl(var(--primary)); color:#fff; padding:8px; border-radius:6px; font-weight:600">Admin</button>
-            <button style="flex:1; background:hsl(var(--muted)); color:hsl(var(--muted-foreground)); padding:8px; border-radius:6px; font-weight:600">Team</button>
+            <h2 style="font-family:'Outfit',sans-serif; font-size:1.5rem; font-weight:700;">Staff Login</h2>
+            <p style="color:hsl(var(--muted-foreground)); font-size:0.9rem">Authorized personnel only</p>
         </div>
 
         <form style="text-align:left" onsubmit="app.handleLogin(event)">
-            <label style="display:block; font-size:0.8rem; color:hsl(var(--muted-foreground)); margin-bottom:4px">Username</label>
-            <input class="form-input" type="text" id="login-email" placeholder="e.g. admin" required>
+            <label style="display:block; font-size:0.8rem; color:hsl(var(--muted-foreground)); margin-bottom:4px">Email</label>
+            <input class="form-input" type="text" id="login-email" placeholder="email@example.com" required>
             
             <label style="display:block; font-size:0.8rem; color:hsl(var(--muted-foreground)); margin-bottom:4px">Password</label>
             <input class="form-input" type="password" id="login-pass" placeholder="••••••••" required>
